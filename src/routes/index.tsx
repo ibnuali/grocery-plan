@@ -1,67 +1,29 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
-  ShoppingBasket,
   ClipboardList,
   Tag,
   TrendingUp,
-  BarChart3,
   CalendarDays,
   Package,
   CircleDollarSign,
-  History,
+  ArrowRight,
 } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button } from '#/components/ui/button'
-import BetterAuthHeader from '#/integrations/better-auth/header-user'
+import { AppHeader } from '#/components/layout/app-header'
+import { LoadingSpinner } from '#/components/layout/loading'
 
 export const Route = createFileRoute('/')({ component: Home })
 
 function Home() {
   const { data: session, isPending } = authClient.useSession()
 
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-5 w-5 border-2 border-neutral-300 dark:border-neutral-600 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (isPending) return <LoadingSpinner />
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="page-wrap flex items-center justify-between h-16 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 no-underline">
-            <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
-              <ShoppingBasket className="size-5" />
-            </div>
-            <span className="display-title text-xl font-bold text-[var(--sea-ink)]">Grocery</span>
-          </Link>
+      <AppHeader session={session} activeRoute="/" />
 
-          {session?.user ? (
-            <div className="flex items-center gap-4">
-              <nav className="hidden sm:flex items-center gap-4">
-                <Link to="/categories" className="nav-link text-sm font-medium">Categories</Link>
-                <Link to="/items" className="nav-link text-sm font-medium">Items</Link>
-                <Link to="/lists" className="nav-link text-sm font-medium">Lists</Link>
-              </nav>
-              <BetterAuthHeader />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/login">Sign In</Link>
-              </Button>
-              <Button size="sm" asChild className="shadow-sm hover:shadow-md">
-                <Link to="/signup">Sign Up</Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Hero */}
       <main className="flex-1">
         {session?.user ? (
           <AuthenticatedView name={session.user.name} />
@@ -70,52 +32,52 @@ function Home() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-background/60 backdrop-blur-sm">
-        <div className="page-wrap px-4 sm:px-6 py-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Grocery. Plan smart, shop smart.</p>
+      <footer className="site-footer mt-auto">
+        <div className="page-wrap flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-6 py-6 text-sm text-muted-foreground">
+          <span className="display-title font-semibold text-foreground">Grocery</span>
+          <p>Plan smart, shop smart.</p>
+          <p className="tabular">&copy; {new Date().getFullYear()}</p>
         </div>
       </footer>
     </div>
   )
 }
 
-function AuthenticatedView({ name }: { name: string }) {
-  const quickActions = [
-    { icon: ClipboardList, title: 'Shopping List', desc: 'Plan your next trip', color: 'from-[var(--lagoon)] to-[var(--lagoon-deep)]', href: '/lists' },
-    { icon: Package, title: 'Item Catalog', desc: 'Manage your items', color: 'from-[var(--palm)] to-emerald-600', href: '/items' },
-    { icon: Tag, title: 'Categories', desc: 'Organize by type', color: 'from-amber-500 to-orange-500', href: '/categories' },
-    { icon: BarChart3, title: 'Price Charts', desc: 'View price trends', color: 'from-blue-500 to-cyan-500', href: '#' },
-  ]
+const quickActions = [
+  { icon: ClipboardList, title: 'Shopping Lists', desc: 'Plan your next trip', href: '/lists' as const },
+  { icon: Package, title: 'Item Catalog', desc: 'Manage your items', href: '/items' as const },
+  { icon: Tag, title: 'Categories', desc: 'Organize by type', href: '/categories' as const },
+]
 
+function AuthenticatedView({ name }: { name: string }) {
   return (
     <div className="page-wrap px-4 sm:px-6 py-10 sm:py-16">
-      <div className="rise-in text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--palm)]/10 text-[var(--palm)] text-xs font-semibold tracking-wide uppercase mb-4">
-          <CalendarDays className="size-3.5" />
-          Shop Preparation
-        </div>
-        <h1 className="display-title text-3xl sm:text-4xl font-bold text-[var(--sea-ink)] mb-2">
+      <div className="rise-in mb-10 max-w-2xl">
+        <h1 className="display-title text-3xl sm:text-4xl font-semibold text-foreground mb-2">
           Welcome back, {name}
         </h1>
-        <p className="text-muted-foreground text-base sm:text-lg max-w-md mx-auto">
+        <p className="text-muted-foreground text-base sm:text-lg">
           Ready to plan your next shopping trip?
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {quickActions.map((f, i) => (
           <Link
             key={f.title}
             to={f.href}
-            className="rise-in feature-card group relative overflow-hidden rounded-2xl border border-border/60 p-5 cursor-pointer no-underline"
-            style={{ animationDelay: `${i * 80}ms` }}
+            className="rise-in tile group rounded-lg p-5 no-underline"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
-            <div className={`flex items-center justify-center size-11 rounded-xl bg-gradient-to-br ${f.color} text-white mb-4 shadow-sm group-hover:scale-105 transition-transform`}>
+            <div className="icon-badge size-11 rounded-md mb-4">
               <f.icon className="size-5" />
             </div>
-            <h3 className="font-semibold text-[var(--sea-ink)] mb-1">{f.title}</h3>
+            <h3 className="font-semibold text-foreground mb-1">{f.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+              Open
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </span>
           </Link>
         ))}
       </div>
@@ -123,96 +85,95 @@ function AuthenticatedView({ name }: { name: string }) {
   )
 }
 
-function GuestView() {
-  const features = [
-    {
-      icon: ClipboardList,
-      title: 'Master Data',
-      desc: 'Build your catalog of grocery items with names, categories, and estimated prices.',
-    },
-    {
-      icon: CircleDollarSign,
-      title: 'Price History',
-      desc: 'Every purchase records the price — track how costs change across weeks and months.',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Price Charts',
-      desc: 'Visualize historical price data per item to spot trends and plan smarter.',
-    },
-    {
-      icon: CalendarDays,
-      title: 'Shop Planning',
-      desc: 'Organize weekly or monthly shopping lists so you never miss an essential item.',
-    },
-  ]
+const guestFeatures = [
+  {
+    icon: ClipboardList,
+    title: 'Master Data',
+    desc: 'Build your catalog of grocery items with names, categories, and estimated prices.',
+  },
+  {
+    icon: CircleDollarSign,
+    title: 'Price History',
+    desc: 'Every purchase records the price — track how costs change across weeks and months.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Price Charts',
+    desc: 'Visualize historical price data per item to spot trends and plan smarter.',
+  },
+  {
+    icon: CalendarDays,
+    title: 'Shop Planning',
+    desc: 'Organize weekly or monthly shopping lists so you never miss an essential item.',
+  },
+] as const
 
+function GuestView() {
   return (
-    <div className="page-wrap px-4 sm:px-6 py-12 sm:py-20">
-      {/* Hero */}
-      <div className="rise-in text-center max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--lagoon)]/10 text-[var(--lagoon-deep)] text-xs font-semibold tracking-wide uppercase mb-6">
-          <ShoppingBasket className="size-3.5" />
-          Shop Preparation
-        </div>
-        <h1 className="display-title text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--sea-ink)] mb-4 leading-tight">
-          Plan your grocery
-          <br />
-          <span className="bg-gradient-to-r from-[var(--lagoon)] to-[var(--palm)] bg-clip-text text-transparent">
-            shopping smarter
-          </span>
+    <div className="page-wrap px-4 sm:px-6">
+      {/* Marquee hero — the statement carries the fold */}
+      <section className="rise-in py-16 sm:py-24 max-w-4xl">
+        <h1 className="display-title text-5xl sm:text-6xl lg:text-7xl font-semibold text-foreground leading-[1.02] wrap-anywhere">
+          Plan your grocery shopping,{' '}
+          <span className="text-primary">down to the price.</span>
         </h1>
-        <p className="text-muted-foreground text-lg sm:text-xl max-w-lg mx-auto mb-8 leading-relaxed">
-          Record weekly and monthly purchases, track item prices over time, and always know what to buy and how much it costs.
+        <p className="text-muted-foreground text-lg sm:text-xl max-w-xl mt-6 leading-relaxed">
+          Record weekly and monthly purchases, track item prices over time, and
+          always know what to buy and how much it costs.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button size="lg" asChild className="shadow-md hover:shadow-lg w-full sm:w-auto">
-            <Link to="/signup">Get Started Free</Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-8">
+          <Button size="lg" asChild className="w-full sm:w-auto">
+            <Link to="/signup">Start free</Link>
           </Button>
           <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-            <Link to="/login">Sign In</Link>
+            <Link to="/login">Sign in</Link>
           </Button>
         </div>
-      </div>
+      </section>
 
-      {/* Features */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 max-w-3xl mx-auto mb-16">
-        {features.map((f, i) => (
-          <div
-            key={f.title}
-            className="rise-in feature-card group rounded-2xl border border-border/60 p-6"
-            style={{ animationDelay: `${i * 80}ms` }}
-          >
-            <div className="flex items-center justify-center size-11 rounded-xl bg-gradient-to-br from-[var(--sand)] to-[var(--foam)] text-[var(--palm)] mb-4 shadow-sm group-hover:scale-105 transition-transform">
-              <f.icon className="size-5" />
-            </div>
-            <h3 className="font-semibold text-[var(--sea-ink)] text-lg mb-1">{f.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-          </div>
-        ))}
-      </div>
+      <hr className="border-0 border-t border-border" />
 
-      {/* How It Works */}
-      <div className="rise-in text-center max-w-2xl mx-auto">
-        <h2 className="display-title text-2xl sm:text-3xl font-bold text-[var(--sea-ink)] mb-8">
-          How it works
+      <section className="py-14 sm:py-20">
+        <h2 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-8 max-w-md">
+          Everything you need to shop deliberately
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { step: '1', title: 'Add Items', desc: 'Create your master list of grocery items with categories and prices.' },
-            { step: '2', title: 'Track Purchases', desc: 'Log what you bought and at what price each time you shop.' },
-            { step: '3', title: 'See Trends', desc: 'View charts showing how your prices change over weeks and months.' },
-          ].map((s) => (
-            <div key={s.step} className="flex flex-col items-center">
-              <div className="flex items-center justify-center size-10 rounded-full bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white font-bold text-sm mb-3 shadow-sm">
-                {s.step}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border border border-border rounded-lg overflow-hidden">
+          {guestFeatures.map((f, i) => (
+            <div
+              key={f.title}
+              className="rise-in bg-background p-6"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="icon-badge size-11 rounded-md mb-4">
+                <f.icon className="size-5" />
               </div>
-              <h4 className="font-semibold text-[var(--sea-ink)] mb-1">{s.title}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+              <h3 className="font-semibold text-foreground text-lg mb-1">{f.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
+
+      <section className="rise-in py-14 sm:py-20 border-t border-border">
+        <h2 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-10 max-w-md">
+          How it works
+        </h2>
+        <ol className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
+          {[
+            { step: '1', title: 'Add items', desc: 'Create your master list of grocery items with categories and prices.' },
+            { step: '2', title: 'Track purchases', desc: 'Log what you bought and at what price each time you shop.' },
+            { step: '3', title: 'See trends', desc: 'View how your prices change across weeks and months.' },
+          ].map((s) => (
+            <li key={s.step} className="flex flex-col">
+              <span className="display-title tabular text-4xl font-semibold text-primary leading-none mb-3">
+                {s.step}
+              </span>
+              <h4 className="font-semibold text-foreground mb-1">{s.title}</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
     </div>
   )
 }

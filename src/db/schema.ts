@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, numeric } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
 
 // Better Auth tables
 export const user = pgTable('user', {
@@ -63,7 +63,9 @@ export const category = pgTable('category', {
     .references(() => user.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
-})
+}, (t) => [
+  index('category_user_id_idx').on(t.userId),
+])
 
 export const item = pgTable('item', {
   id: text().primaryKey(),
@@ -77,7 +79,10 @@ export const item = pgTable('item', {
     .references(() => user.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
-})
+}, (t) => [
+  index('item_user_id_idx').on(t.userId),
+  index('item_category_id_idx').on(t.categoryId),
+])
 
 export const shoppingList = pgTable('shopping_list', {
   id: text().primaryKey(),
@@ -90,7 +95,9 @@ export const shoppingList = pgTable('shopping_list', {
     .references(() => user.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
-})
+}, (t) => [
+  index('shopping_list_user_id_idx').on(t.userId),
+])
 
 export const shoppingListItem = pgTable('shopping_list_item', {
   id: text().primaryKey(),
@@ -102,7 +109,10 @@ export const shoppingListItem = pgTable('shopping_list_item', {
     .references(() => item.id),
   quantity: integer('quantity').notNull().default(1),
   createdAt: timestamp('created_at').notNull(),
-})
+}, (t) => [
+  index('shopping_list_item_list_id_idx').on(t.shoppingListId),
+  index('shopping_list_item_item_id_idx').on(t.itemId),
+])
 
 export const purchase = pgTable('purchase', {
   id: text().primaryKey(),
@@ -112,4 +122,6 @@ export const purchase = pgTable('purchase', {
   actualPrice: integer('actual_price').notNull(),
   purchasedAt: timestamp('purchased_at').notNull(),
   createdAt: timestamp('created_at').notNull(),
-})
+}, (t) => [
+  index('purchase_shopping_list_item_id_idx').on(t.shoppingListItemId),
+])

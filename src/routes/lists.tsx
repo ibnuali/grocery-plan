@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { ShoppingBasket, Plus, Pencil, Trash2, ClipboardList, CalendarDays, ShoppingCart } from 'lucide-react'
+import { Plus, Pencil, Trash2, ClipboardList, CalendarDays, ShoppingCart } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -21,6 +21,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { AppHeader } from '#/components/layout/app-header'
+import { LoadingSpinner } from '#/components/layout/loading'
+import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 
 export const Route = createFileRoute('/lists')({
   component: ListsPage,
@@ -33,7 +36,6 @@ interface ShoppingList {
   startDate: string
   endDate: string
   createdAt: string
-  itemCount?: number
 }
 
 function ListsPage() {
@@ -47,6 +49,7 @@ function ListsPage() {
   const [listStartDate, setListStartDate] = useState('')
   const [listEndDate, setListEndDate] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (session?.user) {
@@ -56,11 +59,10 @@ function ListsPage() {
 
   const fetchLists = async () => {
     try {
-      const res = await fetch('/api/lists')
-      const data = await res.json()
+      const data = await apiGet<{ lists: ShoppingList[] }>('/api/lists')
       setLists(data.lists || [])
-    } catch (error) {
-      console.error('Failed to fetch lists:', error)
+    } catch (err) {
+      console.error('Failed to fetch lists:', err)
     } finally {
       setLoading(false)
     }
@@ -69,6 +71,7 @@ function ListsPage() {
   const handleSave = async () => {
     if (!listName.trim() || !listStartDate || !listEndDate) return
     setSaving(true)
+    setError('')
 
     try {
       const payload = {
@@ -79,17 +82,9 @@ function ListsPage() {
       }
 
       if (editingList) {
-        await fetch(`/api/lists/${editingList.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        await apiPut(`/api/lists/${editingList.id}`, payload)
       } else {
-        await fetch('/api/lists', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        await apiPost('/api/lists', payload)
       }
       await fetchLists()
       setDialogOpen(false)
@@ -98,8 +93,8 @@ function ListsPage() {
       setListPeriod('weekly')
       setListStartDate('')
       setListEndDate('')
-    } catch (error) {
-      console.error('Failed to save list:', error)
+    } catch (err: any) {
+      setError(err.message || 'Failed to save list')
     } finally {
       setSaving(false)
     }
@@ -109,10 +104,10 @@ function ListsPage() {
     if (!confirm('Are you sure you want to delete this list?')) return
 
     try {
-      await fetch(`/api/lists/${id}`, { method: 'DELETE' })
+      await apiDelete(`/api/lists/${id}`)
       await fetchLists()
-    } catch (error) {
-      console.error('Failed to delete list:', error)
+    } catch (err) {
+      console.error('Failed to delete list:', err)
     }
   }
 
@@ -122,6 +117,7 @@ function ListsPage() {
     setListPeriod(list.period)
     setListStartDate(list.startDate.split('T')[0])
     setListEndDate(list.endDate.split('T')[0])
+    setError('')
     setDialogOpen(true)
   }
 
@@ -131,6 +127,7 @@ function ListsPage() {
     setListPeriod('weekly')
     setListStartDate('')
     setListEndDate('')
+    setError('')
     setDialogOpen(true)
   }
 
@@ -142,13 +139,7 @@ function ListsPage() {
     })
   }
 
-  if (isPending || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-5 w-5 border-2 border-neutral-300 dark:border-neutral-600 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (isPending || loading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -160,30 +151,13 @@ function ListsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="page-wrap flex items-center justify-between h-16 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 no-underline">
-            <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
-              <ShoppingBasket className="size-5" />
-            </div>
-            <span className="display-title text-xl font-bold text-[var(--sea-ink)]">Grocery</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link to="/" className="nav-link text-sm font-medium">Home</Link>
-            <Link to="/categories" className="nav-link text-sm font-medium">Categories</Link>
-            <Link to="/items" className="nav-link text-sm font-medium">Items</Link>
-            <Link to="/lists" className="nav-link is-active text-sm font-medium">Lists</Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} activeRoute="/lists" />
 
-      {/* Main */}
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-bold text-[var(--sea-ink)] mb-1">Shopping Lists</h1>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Shopping Lists</h1>
               <p className="text-muted-foreground">Plan your weekly and monthly grocery trips</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -201,6 +175,11 @@ function ListsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {error && (
+                    <div className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+                      {error}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="list-name">Name</Label>
                     <Input
@@ -208,13 +187,13 @@ function ListsPage() {
                       value={listName}
                       onChange={(e) => setListName(e.target.value)}
                       placeholder="e.g., Weekly Groceries, Monthly Stock"
-                      className="bg-white/60"
+                      className="bg-background"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="list-period">Period</Label>
                     <Select value={listPeriod} onValueChange={setListPeriod}>
-                      <SelectTrigger className="w-full bg-white/60">
+                      <SelectTrigger className="w-full bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -231,7 +210,7 @@ function ListsPage() {
                         type="date"
                         value={listStartDate}
                         onChange={(e) => setListStartDate(e.target.value)}
-                        className="bg-white/60"
+                        className="bg-background"
                       />
                     </div>
                     <div className="space-y-2">
@@ -241,7 +220,7 @@ function ListsPage() {
                         type="date"
                         value={listEndDate}
                         onChange={(e) => setListEndDate(e.target.value)}
-                        className="bg-white/60"
+                        className="bg-background"
                       />
                     </div>
                   </div>
@@ -257,9 +236,9 @@ function ListsPage() {
           </div>
 
           {lists.length === 0 ? (
-            <div className="rise-in text-center py-16 feature-card rounded-2xl border border-border/60">
-              <ClipboardList className="size-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--sea-ink)] mb-2">No shopping lists yet</h3>
+            <div className="rise-in text-center py-16 surface rounded-lg">
+              <ClipboardList className="size-10 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No shopping lists yet</h3>
               <p className="text-muted-foreground mb-4">Create your first list to start planning your grocery trips.</p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
@@ -271,16 +250,22 @@ function ListsPage() {
               {lists.map((list, i) => (
                 <div
                   key={list.id}
-                  className="rise-in feature-card rounded-2xl border border-border/60 p-5"
+                  className="rise-in tile rounded-lg p-5"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--lagoon-deep)] text-white shadow-sm">
+                      <div className="icon-badge size-10 rounded-md">
                         <ShoppingCart className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-[var(--sea-ink)]">{list.name}</h3>
+                        <Link
+                          to="/lists/$listId"
+                          params={{ listId: list.id }}
+                          className="font-semibold text-foreground no-underline hover:text-primary"
+                        >
+                          {list.name}
+                        </Link>
                         <p className="text-xs text-muted-foreground capitalize">{list.period}</p>
                       </div>
                     </div>
@@ -302,14 +287,11 @@ function ListsPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border/40">
+                  <div className="mt-4 pt-4 border-t border-border">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CalendarDays className="size-4" />
-                      <span>{formatDate(list.startDate)} - {formatDate(list.endDate)}</span>
+                      <span className="tabular">{formatDate(list.startDate)} – {formatDate(list.endDate)}</span>
                     </div>
-                    {list.itemCount !== undefined && (
-                      <p className="text-xs text-muted-foreground mt-1">{list.itemCount} items</p>
-                    )}
                   </div>
                 </div>
               ))}

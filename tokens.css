@@ -1,0 +1,50 @@
+/* Hallmark · Grocery design system · portable tokens
+ * genre: modern-minimal · theme: paper-light + produce-green accent
+ * Source of truth: design.md. Mirrored into src/styles.css :root. */
+:root {
+  --color-paper: oklch(0.992 0.005 130);
+  --color-paper-2: oklch(0.972 0.007 135);
+  --color-paper-3: oklch(0.945 0.01 140);
+  --color-ink: oklch(0.265 0.02 158);
+  --color-ink-2: oklch(0.52 0.018 152);
+  --color-rule: oklch(0.9 0.01 150);
+  --color-accent: oklch(0.56 0.13 150);
+  --color-accent-strong: oklch(0.5 0.13 150);
+  --color-accent-ink: oklch(0.992 0.01 150);
+  --color-danger: oklch(0.552 0.19 25);
+  --color-focus: oklch(0.56 0.13 150);
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 7rem;
+
+  --text-display: clamp(2.5rem, 6vw + 0.5rem, 4.5rem);
+  --text-display-s: clamp(2rem, 4vw + 0.5rem, 3rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-short: 200ms;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --color-paper: oklch(0.205 0.013 160);
+  --color-paper-2: oklch(0.245 0.015 160);
+  --color-paper-3: oklch(0.285 0.018 160);
+  --color-ink: oklch(0.955 0.008 150);
+  --color-ink-2: oklch(0.72 0.018 150);
+  --color-rule: oklch(0.32 0.018 155);
+  --color-accent: oklch(0.72 0.125 152);
+  --color-accent-strong: oklch(0.78 0.12 152);
+  --color-accent-ink: oklch(0.18 0.02 160);
+  --color-danger: oklch(0.68 0.18 25);
+  --color-focus: oklch(0.72 0.125 152);
+}

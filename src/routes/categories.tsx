@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { ShoppingBasket, Plus, Pencil, Trash2, Tag } from 'lucide-react'
+import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -14,6 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { AppHeader } from '#/components/layout/app-header'
+import { LoadingSpinner } from '#/components/layout/loading'
+import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 
 export const Route = createFileRoute('/categories')({
   component: CategoriesPage,
@@ -33,6 +36,7 @@ function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryName, setCategoryName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (session?.user) {
@@ -42,11 +46,10 @@ function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/categories')
-      const data = await res.json()
+      const data = await apiGet<{ categories: Category[] }>('/api/categories')
       setCategories(data.categories || [])
-    } catch (error) {
-      console.error('Failed to fetch categories:', error)
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
     } finally {
       setLoading(false)
     }
@@ -55,27 +58,20 @@ function CategoriesPage() {
   const handleSave = async () => {
     if (!categoryName.trim()) return
     setSaving(true)
+    setError('')
 
     try {
       if (editingCategory) {
-        await fetch(`/api/categories/${editingCategory.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: categoryName.trim() }),
-        })
+        await apiPut(`/api/categories/${editingCategory.id}`, { name: categoryName.trim() })
       } else {
-        await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: categoryName.trim() }),
-        })
+        await apiPost('/api/categories', { name: categoryName.trim() })
       }
       await fetchCategories()
       setDialogOpen(false)
       setEditingCategory(null)
       setCategoryName('')
-    } catch (error) {
-      console.error('Failed to save category:', error)
+    } catch (err: any) {
+      setError(err.message || 'Failed to save category')
     } finally {
       setSaving(false)
     }
@@ -85,32 +81,28 @@ function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return
 
     try {
-      await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+      await apiDelete(`/api/categories/${id}`)
       await fetchCategories()
-    } catch (error) {
-      console.error('Failed to delete category:', error)
+    } catch (err) {
+      console.error('Failed to delete category:', err)
     }
   }
 
   const openEditDialog = (category: Category) => {
     setEditingCategory(category)
     setCategoryName(category.name)
+    setError('')
     setDialogOpen(true)
   }
 
   const openCreateDialog = () => {
     setEditingCategory(null)
     setCategoryName('')
+    setError('')
     setDialogOpen(true)
   }
 
-  if (isPending || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-5 w-5 border-2 border-neutral-300 dark:border-neutral-600 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (isPending || loading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -122,30 +114,13 @@ function CategoriesPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="page-wrap flex items-center justify-between h-16 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 no-underline">
-            <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
-              <ShoppingBasket className="size-5" />
-            </div>
-            <span className="display-title text-xl font-bold text-[var(--sea-ink)]">Grocery</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link to="/" className="nav-link text-sm font-medium">Home</Link>
-            <Link to="/categories" className="nav-link is-active text-sm font-medium">Categories</Link>
-            <Link to="/items" className="nav-link text-sm font-medium">Items</Link>
-            <Link to="/lists" className="nav-link text-sm font-medium">Lists</Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} activeRoute="/categories" />
 
-      {/* Main */}
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-bold text-[var(--sea-ink)] mb-1">Categories</h1>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Categories</h1>
               <p className="text-muted-foreground">Organize your items into categories</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -163,6 +138,11 @@ function CategoriesPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {error && (
+                    <div className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+                      {error}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="category-name">Name</Label>
                     <Input
@@ -170,7 +150,7 @@ function CategoriesPage() {
                       value={categoryName}
                       onChange={(e) => setCategoryName(e.target.value)}
                       placeholder="e.g., Fruits, Dairy, Bakery"
-                      className="bg-white/60"
+                      className="bg-background"
                     />
                   </div>
                 </div>
@@ -185,9 +165,9 @@ function CategoriesPage() {
           </div>
 
           {categories.length === 0 ? (
-            <div className="rise-in text-center py-16 feature-card rounded-2xl border border-border/60">
-              <Tag className="size-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--sea-ink)] mb-2">No categories yet</h3>
+            <div className="rise-in text-center py-16 surface rounded-lg">
+              <Tag className="size-10 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No categories yet</h3>
               <p className="text-muted-foreground mb-4">Create your first category to start organizing items.</p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
@@ -199,16 +179,16 @@ function CategoriesPage() {
               {categories.map((cat, i) => (
                 <div
                   key={cat.id}
-                  className="rise-in feature-card rounded-2xl border border-border/60 p-5"
+                  className="rise-in tile rounded-lg p-5"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-[var(--sand)] to-[var(--foam)] text-[var(--palm)] shadow-sm">
+                      <div className="icon-badge size-10 rounded-md">
                         <Tag className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-[var(--sea-ink)]">{cat.name}</h3>
+                        <h3 className="font-semibold text-foreground">{cat.name}</h3>
                         <p className="text-xs text-muted-foreground">
                           Created {new Date(cat.createdAt).toLocaleDateString()}
                         </p>

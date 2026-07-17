@@ -44,21 +44,23 @@ function SignupPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[var(--palm)] via-[#2a5e42] to-[var(--sea-ink)] items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 right-20 size-64 rounded-full bg-[var(--lagoon)]/30 blur-3xl" />
-          <div className="absolute bottom-20 left-20 size-48 rounded-full bg-[var(--lagoon)]/40 blur-3xl" />
-          <div className="absolute top-1/2 right-1/3 size-32 rounded-full bg-white/10 blur-2xl" />
-        </div>
-        <div className="relative z-10 text-center">
-          <div className="inline-flex items-center justify-center size-20 rounded-2xl bg-white/10 backdrop-blur-sm mb-6 shadow-lg">
-            <ShoppingBasket className="size-10 text-white" />
+      <div className="hidden lg:flex lg:w-1/2 relative bg-foreground text-background p-12 flex-col justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="inline-flex items-center justify-center size-9 rounded-md border border-primary/40 bg-primary/15 text-primary">
+            <ShoppingBasket className="size-5" />
           </div>
-          <h1 className="display-title text-4xl font-bold text-white mb-3">Grocery</h1>
-          <p className="text-white/70 text-lg max-w-xs mx-auto leading-relaxed">
-            Build your item catalog, track prices over time, shop smarter.
+          <span className="display-title text-xl font-semibold">Grocery</span>
+        </div>
+        <div className="max-w-md">
+          <h1 className="display-title text-4xl font-semibold leading-tight mb-4">
+            Build your catalog,{' '}
+            <span className="text-primary">shop smarter.</span>
+          </h1>
+          <p className="text-background/60 text-lg leading-relaxed">
+            Track prices over time and turn every trip into a plan you can trust.
           </p>
         </div>
+        <div className="h-px w-16 bg-primary" />
       </div>
 
       {/* Right Panel - Form */}
@@ -66,25 +68,25 @@ function SignupPage() {
         <div className="w-full max-w-sm">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
+            <div className="icon-badge size-10 rounded-md">
               <ShoppingBasket className="size-5" />
             </div>
-            <span className="display-title text-2xl font-bold text-[var(--sea-ink)]">Grocery</span>
+            <span className="display-title text-2xl font-semibold text-foreground">Grocery</span>
           </div>
 
           <div className="rise-in">
-            <h2 className="text-2xl font-bold text-[var(--sea-ink)] mb-1">Create account</h2>
+            <h2 className="display-title text-2xl font-semibold text-foreground mb-1">Create account</h2>
             <p className="text-muted-foreground mb-8">Start planning your grocery shopping today</p>
 
             {error && (
-              <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 text-center">
+              <div className="mb-6 p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive text-center">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="name" className="text-sm font-medium text-foreground">
                   Full Name
                 </Label>
                 <div className="relative">
@@ -94,14 +96,14 @@ function SignupPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your full name"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email
                 </Label>
                 <div className="relative">
@@ -112,14 +114,14 @@ function SignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="username" className="text-sm font-medium text-foreground">
                   Username
                 </Label>
                 <div className="relative">
@@ -129,14 +131,14 @@ function SignupPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Choose a username"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
                 <div className="relative">
@@ -147,7 +149,7 @@ function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create a password"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                     minLength={8}
                   />
@@ -157,7 +159,7 @@ function SignupPage() {
 
               <Button
                 type="submit"
-               
+                variant="default"
                 className="w-full h-11 shadow-md hover:shadow-lg transition-all"
                 disabled={loading}
               >
@@ -174,7 +176,7 @@ function SignupPage() {
 
             <p className="mt-8 text-sm text-center text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-[var(--lagoon-deep)] hover:text-[var(--palm)] transition-colors">
+              <Link to="/login" className="font-semibold text-primary">
                 Sign in
               </Link>
             </p>

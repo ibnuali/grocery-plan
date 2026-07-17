@@ -40,21 +40,23 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[var(--sea-ink)] via-[#1a4550] to-[var(--palm)] items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-20 size-64 rounded-full bg-[var(--lagoon)]/30 blur-3xl" />
-          <div className="absolute bottom-20 right-20 size-48 rounded-full bg-[var(--palm)]/40 blur-3xl" />
-          <div className="absolute top-1/2 left-1/3 size-32 rounded-full bg-[var(--lagoon)]/20 blur-2xl" />
-        </div>
-        <div className="relative z-10 text-center">
-          <div className="inline-flex items-center justify-center size-20 rounded-2xl bg-white/10 backdrop-blur-sm mb-6 shadow-lg">
-            <ShoppingBasket className="size-10 text-white" />
+      <div className="hidden lg:flex lg:w-1/2 relative bg-foreground text-background p-12 flex-col justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="inline-flex items-center justify-center size-9 rounded-md border border-primary/40 bg-primary/15 text-primary">
+            <ShoppingBasket className="size-5" />
           </div>
-          <h1 className="display-title text-4xl font-bold text-white mb-3">Grocery</h1>
-          <p className="text-white/70 text-lg max-w-xs mx-auto leading-relaxed">
-            Plan your shopping, track your prices, never overpay again.
+          <span className="display-title text-xl font-semibold">Grocery</span>
+        </div>
+        <div className="max-w-md">
+          <h1 className="display-title text-4xl font-semibold leading-tight mb-4">
+            Plan your shopping,{' '}
+            <span className="text-primary">track every price.</span>
+          </h1>
+          <p className="text-background/60 text-lg leading-relaxed">
+            Never overpay again. Your lists and price history, waiting for you.
           </p>
         </div>
+        <div className="h-px w-16 bg-primary" />
       </div>
 
       {/* Right Panel - Form */}
@@ -62,25 +64,25 @@ function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
+            <div className="icon-badge size-10 rounded-md">
               <ShoppingBasket className="size-5" />
             </div>
-            <span className="display-title text-2xl font-bold text-[var(--sea-ink)]">Grocery</span>
+            <span className="display-title text-2xl font-semibold text-foreground">Grocery</span>
           </div>
 
           <div className="rise-in">
-            <h2 className="text-2xl font-bold text-[var(--sea-ink)] mb-1">Welcome back</h2>
+            <h2 className="display-title text-2xl font-semibold text-foreground mb-1">Welcome back</h2>
             <p className="text-muted-foreground mb-8">Sign in to access your shopping lists and price history</p>
 
             {error && (
-              <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 text-center">
+              <div className="mb-6 p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive text-center">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="username" className="text-sm font-medium text-foreground">
                   Username
                 </Label>
                 <div className="relative">
@@ -90,14 +92,14 @@ function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter your username"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-[var(--sea-ink)]">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
                 <div className="relative">
@@ -108,7 +110,7 @@ function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="pl-10 h-11 bg-white/60 border-border/60 focus:border-[var(--lagoon)] focus:ring-[var(--lagoon)]/20"
+                    className="pl-10 h-11 bg-background border-border"
                     required
                   />
                 </div>
@@ -133,7 +135,7 @@ function LoginPage() {
 
             <p className="mt-8 text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/signup" className="font-semibold text-[var(--lagoon-deep)] hover:text-[var(--palm)] transition-colors">
+              <Link to="/signup" className="font-semibold text-primary">
                 Sign up
               </Link>
             </p>

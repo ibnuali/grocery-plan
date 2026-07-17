@@ -42,6 +42,16 @@ export const Route = createFileRoute('/api/items/$')({
         const id = params._splat
         const body = await request.json()
 
+        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+          return json({ error: 'Name is required' }, { status: 400 })
+        }
+        if (!body.categoryId) {
+          return json({ error: 'Category is required' }, { status: 400 })
+        }
+        if (body.estimatedPrice == null || typeof body.estimatedPrice !== 'number') {
+          return json({ error: 'Estimated price is required' }, { status: 400 })
+        }
+
         const [updated] = await db
           .update(item)
           .set({

@@ -1,0 +1,13 @@
+[
+  {
+    "date": "2026-07-17",
+    "scope": "app",
+    "macrostructure": "Workbench + Marquee Hero",
+    "theme": "Grocery (custom · paper-light · produce-green accent)",
+    "theme_axes": "light / classical-serif (Fraunces) / chromatic-green",
+    "enrichment": "none",
+    "genre": "modern-minimal",
+    "design_system": "design.md",
+    "brief": "Grocery price-tracking app — refactor design, strip AI-slop (gradients/glass/blobs), lock modern-minimal system across all routes"
+  }
+]

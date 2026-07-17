@@ -1,8 +1,8 @@
 import {
   HeadContent,
+  Link,
   Scripts,
   createRootRouteWithContext,
-  Outlet,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
@@ -21,9 +21,9 @@ function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-[var(--sea-ink)] mb-2">404</h1>
+        <h1 className="display-title text-5xl font-semibold text-foreground mb-2">404</h1>
         <p className="text-muted-foreground mb-4">Page not found</p>
-        <a href="/" className="text-[var(--lagoon-deep)] underline">Go home</a>
+        <Link to="/" className="text-primary underline">Go home</Link>
       </div>
     </div>
   )
@@ -62,18 +62,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            TanStackQueryDevtools,
-          ]}
-        />
+        {import.meta.env.DEV && (
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              TanStackQueryDevtools,
+            ]}
+          />
+        )}
         <Scripts />
       </body>
     </html>

@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { ShoppingBasket, Plus, Pencil, Trash2, Package } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Pencil, Trash2, Package } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -21,6 +21,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { AppHeader } from '#/components/layout/app-header'
+import { LoadingSpinner } from '#/components/layout/loading'
+import { formatPrice } from '#/lib/format'
+import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 
 export const Route = createFileRoute('/items')({
   component: ItemsPage,
@@ -51,6 +55,12 @@ function ItemsPage() {
   const [itemCategoryId, setItemCategoryId] = useState('')
   const [itemPrice, setItemPrice] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const categoryMap = useMemo(
+    () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
+    [categories],
+  )
 
   useEffect(() => {
     if (session?.user) {
@@ -60,11 +70,10 @@ function ItemsPage() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('/api/items')
-      const data = await res.json()
+      const data = await apiGet<{ items: Item[] }>('/api/items')
       setItems(data.items || [])
-    } catch (error) {
-      console.error('Failed to fetch items:', error)
+    } catch (err) {
+      console.error('Failed to fetch items:', err)
     } finally {
       setLoading(false)
     }
@@ -72,37 +81,29 @@ function ItemsPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/categories')
-      const data = await res.json()
+      const data = await apiGet<{ categories: Category[] }>('/api/categories')
       setCategories(data.categories || [])
-    } catch (error) {
-      console.error('Failed to fetch categories:', error)
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
     }
   }
 
   const handleSave = async () => {
     if (!itemName.trim() || !itemCategoryId || !itemPrice) return
     setSaving(true)
+    setError('')
 
     try {
       const payload = {
         name: itemName.trim(),
         categoryId: itemCategoryId,
-        estimatedPrice: Math.round(parseFloat(itemPrice) * 100), // Convert to cents
+        estimatedPrice: Math.round(parseFloat(itemPrice) * 100),
       }
 
       if (editingItem) {
-        await fetch(`/api/items/${editingItem.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        await apiPut(`/api/items/${editingItem.id}`, payload)
       } else {
-        await fetch('/api/items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        await apiPost('/api/items', payload)
       }
       await fetchItems()
       setDialogOpen(false)
@@ -110,8 +111,8 @@ function ItemsPage() {
       setItemName('')
       setItemCategoryId('')
       setItemPrice('')
-    } catch (error) {
-      console.error('Failed to save item:', error)
+    } catch (err: any) {
+      setError(err.message || 'Failed to save item')
     } finally {
       setSaving(false)
     }
@@ -121,10 +122,10 @@ function ItemsPage() {
     if (!confirm('Are you sure you want to delete this item?')) return
 
     try {
-      await fetch(`/api/items/${id}`, { method: 'DELETE' })
+      await apiDelete(`/api/items/${id}`)
       await fetchItems()
-    } catch (error) {
-      console.error('Failed to delete item:', error)
+    } catch (err) {
+      console.error('Failed to delete item:', err)
     }
   }
 
@@ -133,6 +134,7 @@ function ItemsPage() {
     setItemName(item.name)
     setItemCategoryId(item.categoryId)
     setItemPrice((item.estimatedPrice / 100).toFixed(2))
+    setError('')
     setDialogOpen(true)
   }
 
@@ -141,28 +143,11 @@ function ItemsPage() {
     setItemName('')
     setItemCategoryId('')
     setItemPrice('')
+    setError('')
     setDialogOpen(true)
   }
 
-  const formatPrice = (cents: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(cents)
-  }
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'Unknown'
-  }
-
-  if (isPending || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-5 w-5 border-2 border-neutral-300 dark:border-neutral-600 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (isPending || loading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -174,30 +159,13 @@ function ItemsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="page-wrap flex items-center justify-between h-16 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 no-underline">
-            <div className="flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[var(--lagoon)] to-[var(--palm)] text-white shadow-sm">
-              <ShoppingBasket className="size-5" />
-            </div>
-            <span className="display-title text-xl font-bold text-[var(--sea-ink)]">Grocery</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link to="/" className="nav-link text-sm font-medium">Home</Link>
-            <Link to="/categories" className="nav-link text-sm font-medium">Categories</Link>
-            <Link to="/items" className="nav-link is-active text-sm font-medium">Items</Link>
-            <Link to="/lists" className="nav-link text-sm font-medium">Lists</Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} activeRoute="/items" />
 
-      {/* Main */}
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-bold text-[var(--sea-ink)] mb-1">Items</h1>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Items</h1>
               <p className="text-muted-foreground">Manage your grocery item catalog</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -215,6 +183,11 @@ function ItemsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {error && (
+                    <div className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+                      {error}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="item-name">Name</Label>
                     <Input
@@ -222,13 +195,13 @@ function ItemsPage() {
                       value={itemName}
                       onChange={(e) => setItemName(e.target.value)}
                       placeholder="e.g., Rice, Milk, Eggs"
-                      className="bg-white/60"
+                      className="bg-background"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="item-category">Category</Label>
                     <Select value={itemCategoryId} onValueChange={setItemCategoryId}>
-                      <SelectTrigger className="w-full bg-white/60">
+                      <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -248,7 +221,7 @@ function ItemsPage() {
                       value={itemPrice}
                       onChange={(e) => setItemPrice(e.target.value)}
                       placeholder="e.g., 15000"
-                      className="bg-white/60"
+                      className="bg-background"
                     />
                   </div>
                 </div>
@@ -263,9 +236,9 @@ function ItemsPage() {
           </div>
 
           {items.length === 0 ? (
-            <div className="rise-in text-center py-16 feature-card rounded-2xl border border-border/60">
-              <Package className="size-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--sea-ink)] mb-2">No items yet</h3>
+            <div className="rise-in text-center py-16 surface rounded-lg">
+              <Package className="size-10 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No items yet</h3>
               <p className="text-muted-foreground mb-4">Add your first grocery item to start tracking prices.</p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
@@ -277,17 +250,17 @@ function ItemsPage() {
               {items.map((item, i) => (
                 <div
                   key={item.id}
-                  className="rise-in feature-card rounded-2xl border border-border/60 p-5"
+                  className="rise-in tile rounded-lg p-5"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-[var(--lagoon)]/20 to-[var(--palm)]/20 text-[var(--palm)] shadow-sm">
+                      <div className="icon-badge size-10 rounded-md">
                         <Package className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-[var(--sea-ink)]">{item.name}</h3>
-                        <p className="text-xs text-muted-foreground">{getCategoryName(item.categoryId)}</p>
+                        <h3 className="font-semibold text-foreground">{item.name}</h3>
+                        <p className="text-xs text-muted-foreground">{categoryMap[item.categoryId] || 'Unknown'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -308,9 +281,9 @@ function ItemsPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border/40">
-                    <p className="text-sm text-muted-foreground">Estimated Price</p>
-                    <p className="text-lg font-semibold text-[var(--sea-ink)]">{formatPrice(item.estimatedPrice)}</p>
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground">Estimated price</p>
+                    <p className="tabular text-lg font-semibold text-foreground">{formatPrice(item.estimatedPrice)}</p>
                   </div>
                 </div>
               ))}

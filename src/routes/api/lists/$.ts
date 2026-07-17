@@ -42,6 +42,16 @@ export const Route = createFileRoute('/api/lists/$')({
         const id = params._splat
         const body = await request.json()
 
+        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+          return json({ error: 'Name is required' }, { status: 400 })
+        }
+        if (!body.period || !['weekly', 'monthly'].includes(body.period)) {
+          return json({ error: 'Period must be weekly or monthly' }, { status: 400 })
+        }
+        if (!body.startDate || !body.endDate) {
+          return json({ error: 'Start and end dates are required' }, { status: 400 })
+        }
+
         const [updated] = await db
           .update(shoppingList)
           .set({
@@ -71,15 +81,19 @@ export const Route = createFileRoute('/api/lists/$')({
 
         const id = params._splat
 
-        // Delete list items first
-        await db
-          .delete(shoppingListItem)
-          .where(eq(shoppingListItem.shoppingListId, id))
+        const deleted = await db.transaction(async (tx) => {
+          // Delete list items first
+          await tx
+            .delete(shoppingListItem)
+            .where(eq(shoppingListItem.shoppingListId, id))
 
-        const [deleted] = await db
-          .delete(shoppingList)
-          .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, session.user.id)))
-          .returning()
+          const [result] = await tx
+            .delete(shoppingList)
+            .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, session.user.id)))
+            .returning()
+
+          return result
+        })
 
         if (!deleted) {
           return json({ error: 'List not found' }, { status: 404 })

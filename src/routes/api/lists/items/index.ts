@@ -105,14 +105,26 @@ export const Route = createFileRoute('/api/lists/items/')({
           return json({ error: 'id is required' }, { status: 400 })
         }
 
+        // Verify the item belongs to a list owned by the user
+        const [owned] = await db
+          .select({ id: shoppingListItem.id })
+          .from(shoppingListItem)
+          .innerJoin(shoppingList, eq(shoppingListItem.shoppingListId, shoppingList.id))
+          .where(
+            and(
+              eq(shoppingListItem.id, body.id),
+              eq(shoppingList.userId, session.user.id),
+            ),
+          )
+
+        if (!owned) {
+          return json({ error: 'Item not found' }, { status: 404 })
+        }
+
         const [deleted] = await db
           .delete(shoppingListItem)
           .where(eq(shoppingListItem.id, body.id))
           .returning()
-
-        if (!deleted) {
-          return json({ error: 'Item not found' }, { status: 404 })
-        }
 
         return json({ success: true })
       },

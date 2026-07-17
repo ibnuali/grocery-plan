@@ -42,6 +42,10 @@ export const Route = createFileRoute('/api/categories/$')({
         const id = params._splat
         const body = await request.json()
 
+        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+          return json({ error: 'Name is required' }, { status: 400 })
+        }
+
         const [updated] = await db
           .update(category)
           .set({
