@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Plus,
   Pencil,
@@ -48,75 +49,62 @@ interface ShoppingList {
 
 function ListsPage() {
   const { data: session, isPending } = authClient.useSession()
-  const [lists, setLists] = useState<ShoppingList[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingList, setEditingList] = useState<ShoppingList | null>(null)
   const [listName, setListName] = useState('')
   const [listPeriod, setListPeriod] = useState('weekly')
   const [listStartDate, setListStartDate] = useState('')
   const [listEndDate, setListEndDate] = useState('')
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchLists()
-    }
-  }, [session])
+  const { data, isLoading } = useQuery({
+    queryKey: ['lists'],
+    queryFn: () => apiGet<{ lists: ShoppingList[] }>('/api/lists'),
+    enabled: !!session?.user,
+  })
+  const lists = data?.lists ?? []
 
-  const fetchLists = async () => {
-    try {
-      const data = await apiGet<{ lists: ShoppingList[] }>('/api/lists')
-      setLists(data.lists)
-    } catch (err) {
-      console.error('Failed to fetch lists:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!listName.trim() || !listStartDate || !listEndDate) return
-    setSaving(true)
-    setError('')
-
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const payload = {
         name: listName.trim(),
         period: listPeriod,
         startDate: new Date(listStartDate).toISOString(),
         endDate: new Date(listEndDate).toISOString(),
       }
-
       if (editingList) {
-        await apiPut(`/api/lists/${editingList.id}`, payload)
-      } else {
-        await apiPost('/api/lists', payload)
+        return apiPut(`/api/lists/${editingList.id}`, payload)
       }
-      await fetchLists()
+      return apiPost('/api/lists', payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
       setDialogOpen(false)
       setEditingList(null)
       setListName('')
       setListPeriod('weekly')
       setListStartDate('')
       setListEndDate('')
-    } catch (err: any) {
-      setError(err.message || 'Failed to save list')
-    } finally {
-      setSaving(false)
-    }
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to save list'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiDelete(`/api/lists/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists'] }),
+  })
+
+  const handleSave = () => {
+    if (!listName.trim() || !listStartDate || !listEndDate) return
+    setError('')
+    saveMutation.mutate()
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this list?')) return
-
-    try {
-      await apiDelete(`/api/lists/${id}`)
-      await fetchLists()
-    } catch (err) {
-      console.error('Failed to delete list:', err)
-    }
+    deleteMutation.mutate(id)
   }
 
   const openEditDialog = (list: ShoppingList) => {
@@ -147,7 +135,7 @@ function ListsPage() {
     })
   }
 
-  if (isPending || loading) return <LoadingSpinner />
+  if (isPending || isLoading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -257,13 +245,13 @@ function ListsPage() {
                   <Button
                     onClick={handleSave}
                     disabled={
-                      saving ||
+                      saveMutation.isPending ||
                       !listName.trim() ||
                       !listStartDate ||
                       !listEndDate
                     }
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saveMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
               </DialogContent>

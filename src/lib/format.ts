@@ -3,5 +3,5 @@ export function formatPrice(cents: number) {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-  }).format(cents)
+  }).format(cents / 100)
 }

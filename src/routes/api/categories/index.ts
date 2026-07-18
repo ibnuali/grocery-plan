@@ -3,19 +3,14 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { category } from '#/db/schema'
 import { eq } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, createCategorySchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/categories/')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        const session = await requireAuth(request)
 
         const categories = await db
           .select()
@@ -25,19 +20,8 @@ export const Route = createFileRoute('/api/categories/')({
         return json({ categories })
       },
       POST: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.name?.trim()) {
-          return json({ error: 'Name is required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(createCategorySchema, await request.json())
 
         const id = crypto.randomUUID()
         const now = new Date()
@@ -46,7 +30,7 @@ export const Route = createFileRoute('/api/categories/')({
           .insert(category)
           .values({
             id,
-            name: body.name.trim(),
+            name: body.name,
             userId: session.user.id,
             createdAt: now,
             updatedAt: now,

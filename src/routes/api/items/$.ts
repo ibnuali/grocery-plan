@@ -3,21 +3,16 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { item } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, updateItemSchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/items/$')({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
+        const session = await requireAuth(request)
 
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
+        const id = params._splat!
 
         const [found] = await db
           .select()
@@ -31,26 +26,9 @@ export const Route = createFileRoute('/api/items/$')({
         return json(found)
       },
       PUT: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
-        const body = await request.json()
-
-        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
-          return json({ error: 'Name is required' }, { status: 400 })
-        }
-        if (!body.categoryId) {
-          return json({ error: 'Category is required' }, { status: 400 })
-        }
-        if (body.estimatedPrice == null || typeof body.estimatedPrice !== 'number') {
-          return json({ error: 'Estimated price is required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const id = params._splat!
+        const body = validateBody(updateItemSchema, await request.json())
 
         const [updated] = await db
           .update(item)
@@ -70,15 +48,9 @@ export const Route = createFileRoute('/api/items/$')({
         return json(updated)
       },
       DELETE: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
+        const session = await requireAuth(request)
 
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
+        const id = params._splat!
 
         const [deleted] = await db
           .delete(item)

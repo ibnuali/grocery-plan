@@ -1,21 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { db } from '#/db'
-import { shoppingList, shoppingListItem } from '#/db/schema'
-import { eq, count } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { shoppingList } from '#/db/schema'
+import { eq } from 'drizzle-orm'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, createListSchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/lists/')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        const session = await requireAuth(request)
 
         const lists = await db
           .select({
@@ -32,19 +27,8 @@ export const Route = createFileRoute('/api/lists/')({
         return json({ lists })
       },
       POST: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.name?.trim() || !body.period || !body.startDate || !body.endDate) {
-          return json({ error: 'Name, period, start date, and end date are required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(createListSchema, await request.json())
 
         const id = crypto.randomUUID()
         const now = new Date()
@@ -53,7 +37,7 @@ export const Route = createFileRoute('/api/lists/')({
           .insert(shoppingList)
           .values({
             id,
-            name: body.name.trim(),
+            name: body.name,
             period: body.period,
             startDate: new Date(body.startDate),
             endDate: new Date(body.endDate),
