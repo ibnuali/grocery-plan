@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, integer, index, check } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // Better Auth tables
 export const user = pgTable('user', {
@@ -72,7 +73,7 @@ export const item = pgTable('item', {
   name: text().notNull(),
   categoryId: text('category_id')
     .notNull()
-    .references(() => category.id),
+    .references(() => category.id, { onDelete: 'cascade' }),
   estimatedPrice: integer('estimated_price').notNull(),
   userId: text('user_id')
     .notNull()
@@ -82,6 +83,7 @@ export const item = pgTable('item', {
 }, (t) => [
   index('item_user_id_idx').on(t.userId),
   index('item_category_id_idx').on(t.categoryId),
+  check('estimated_price_non_negative', sql`${t.estimatedPrice} >= 0`),
 ])
 
 export const shoppingList = pgTable('shopping_list', {
@@ -103,10 +105,10 @@ export const shoppingListItem = pgTable('shopping_list_item', {
   id: text().primaryKey(),
   shoppingListId: text('shopping_list_id')
     .notNull()
-    .references(() => shoppingList.id),
+    .references(() => shoppingList.id, { onDelete: 'cascade' }),
   itemId: text('item_id')
     .notNull()
-    .references(() => item.id),
+    .references(() => item.id, { onDelete: 'cascade' }),
   quantity: integer('quantity').notNull().default(1),
   createdAt: timestamp('created_at').notNull(),
 }, (t) => [
@@ -118,7 +120,7 @@ export const purchase = pgTable('purchase', {
   id: text().primaryKey(),
   shoppingListItemId: text('shopping_list_item_id')
     .notNull()
-    .references(() => shoppingListItem.id),
+    .references(() => shoppingListItem.id, { onDelete: 'cascade' }),
   actualPrice: integer('actual_price').notNull(),
   purchasedAt: timestamp('purchased_at').notNull(),
   createdAt: timestamp('created_at').notNull(),

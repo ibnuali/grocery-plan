@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
@@ -31,64 +32,50 @@ interface Category {
 
 function CategoriesPage() {
   const { data: session, isPending } = authClient.useSession()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryName, setCategoryName] = useState('')
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchCategories()
-    }
-  }, [session])
+  const { data, isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiGet<{ categories: Category[] }>('/api/categories'),
+    enabled: !!session?.user,
+  })
+  const categories = data?.categories ?? []
 
-  const fetchCategories = async () => {
-    try {
-      const data = await apiGet<{ categories: Category[] }>('/api/categories')
-      setCategories(data.categories)
-    } catch (err) {
-      console.error('Failed to fetch categories:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!categoryName.trim()) return
-    setSaving(true)
-    setError('')
-
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       if (editingCategory) {
-        await apiPut(`/api/categories/${editingCategory.id}`, {
-          name: categoryName.trim(),
-        })
-      } else {
-        await apiPost('/api/categories', { name: categoryName.trim() })
+        return apiPut(`/api/categories/${editingCategory.id}`, { name: categoryName.trim() })
       }
-      await fetchCategories()
+      return apiPost('/api/categories', { name: categoryName.trim() })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
       setDialogOpen(false)
       setEditingCategory(null)
       setCategoryName('')
-    } catch (err: any) {
-      setError(err.message || 'Failed to save category')
-    } finally {
-      setSaving(false)
-    }
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to save category'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiDelete(`/api/categories/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  })
+
+  const handleSave = () => {
+    if (!categoryName.trim()) return
+    setError('')
+    saveMutation.mutate()
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return
-
-    try {
-      await apiDelete(`/api/categories/${id}`)
-      await fetchCategories()
-    } catch (err) {
-      console.error('Failed to delete category:', err)
-    }
+    deleteMutation.mutate(id)
   }
 
   const openEditDialog = (category: Category) => {
@@ -105,7 +92,7 @@ function CategoriesPage() {
     setDialogOpen(true)
   }
 
-  if (isPending || loading) return <LoadingSpinner />
+  if (isPending || isLoading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -177,9 +164,9 @@ function CategoriesPage() {
                   </Button>
                   <Button
                     onClick={handleSave}
-                    disabled={saving || !categoryName.trim()}
+                    disabled={saveMutation.isPending || !categoryName.trim()}
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saveMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
               </DialogContent>

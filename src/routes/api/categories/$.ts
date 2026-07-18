@@ -3,21 +3,16 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { category } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, updateCategorySchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/categories/$')({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
+        const session = await requireAuth(request)
 
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
+        const id = params._splat!!
 
         const [cat] = await db
           .select()
@@ -31,20 +26,9 @@ export const Route = createFileRoute('/api/categories/$')({
         return json(cat)
       },
       PUT: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
-        const body = await request.json()
-
-        if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
-          return json({ error: 'Name is required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const id = params._splat!
+        const body = validateBody(updateCategorySchema, await request.json())
 
         const [updated] = await db
           .update(category)
@@ -62,15 +46,9 @@ export const Route = createFileRoute('/api/categories/$')({
         return json(updated)
       },
       DELETE: async ({ params, request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
+        const session = await requireAuth(request)
 
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const id = params._splat
+        const id = params._splat!
 
         const [deleted] = await db
           .delete(category)

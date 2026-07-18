@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2, Package } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
@@ -47,87 +48,71 @@ interface Item {
 
 function ItemsPage() {
   const { data: session, isPending } = authClient.useSession()
-  const [items, setItems] = useState<Item[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [itemName, setItemName] = useState('')
   const [itemCategoryId, setItemCategoryId] = useState('')
   const [itemPrice, setItemPrice] = useState('')
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const { data: itemsData, isLoading: itemsLoading } = useQuery({
+    queryKey: ['items'],
+    queryFn: () => apiGet<{ items: Item[] }>('/api/items'),
+    enabled: !!session?.user,
+  })
+  const items = itemsData?.items ?? []
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiGet<{ categories: Category[] }>('/api/categories'),
+    enabled: !!session?.user,
+  })
+  const categories = categoriesData?.categories ?? []
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
     [categories],
   )
 
-  useEffect(() => {
-    if (session?.user) {
-      Promise.all([fetchItems(), fetchCategories()])
-    }
-  }, [session])
-
-  const fetchItems = async () => {
-    try {
-      const data = await apiGet<{ items: Item[] }>('/api/items')
-      setItems(data.items)
-    } catch (err) {
-      console.error('Failed to fetch items:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      const data = await apiGet<{ categories: Category[] }>('/api/categories')
-      setCategories(data.categories)
-    } catch (err) {
-      console.error('Failed to fetch categories:', err)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!itemName.trim() || !itemCategoryId || !itemPrice) return
-    setSaving(true)
-    setError('')
-
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const payload = {
         name: itemName.trim(),
         categoryId: itemCategoryId,
         estimatedPrice: Math.round(parseFloat(itemPrice) * 100),
       }
-
       if (editingItem) {
-        await apiPut(`/api/items/${editingItem.id}`, payload)
-      } else {
-        await apiPost('/api/items', payload)
+        return apiPut(`/api/items/${editingItem.id}`, payload)
       }
-      await fetchItems()
+      return apiPost('/api/items', payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items'] })
       setDialogOpen(false)
       setEditingItem(null)
       setItemName('')
       setItemCategoryId('')
       setItemPrice('')
-    } catch (err: any) {
-      setError(err.message || 'Failed to save item')
-    } finally {
-      setSaving(false)
-    }
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to save item'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiDelete(`/api/items/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items'] }),
+  })
+
+  const handleSave = () => {
+    if (!itemName.trim() || !itemCategoryId || !itemPrice) return
+    setError('')
+    saveMutation.mutate()
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return
-
-    try {
-      await apiDelete(`/api/items/${id}`)
-      await fetchItems()
-    } catch (err) {
-      console.error('Failed to delete item:', err)
-    }
+    deleteMutation.mutate(id)
   }
 
   const openEditDialog = (item: Item) => {
@@ -148,7 +133,7 @@ function ItemsPage() {
     setDialogOpen(true)
   }
 
-  if (isPending || loading) return <LoadingSpinner />
+  if (isPending || itemsLoading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -248,13 +233,13 @@ function ItemsPage() {
                   <Button
                     onClick={handleSave}
                     disabled={
-                      saving ||
+                      saveMutation.isPending ||
                       !itemName.trim() ||
                       !itemCategoryId ||
                       !itemPrice
                     }
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saveMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
               </DialogContent>

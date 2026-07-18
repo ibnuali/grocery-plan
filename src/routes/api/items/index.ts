@@ -3,19 +3,14 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { item, category } from '#/db/schema'
 import { eq } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, createItemSchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/items/')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        const session = await requireAuth(request)
 
         const items = await db
           .select({
@@ -33,19 +28,8 @@ export const Route = createFileRoute('/api/items/')({
         return json({ items })
       },
       POST: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.name?.trim() || !body.categoryId || !body.estimatedPrice) {
-          return json({ error: 'Name, category, and estimated price are required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(createItemSchema, await request.json())
 
         const id = crypto.randomUUID()
         const now = new Date()
@@ -54,7 +38,7 @@ export const Route = createFileRoute('/api/items/')({
           .insert(item)
           .values({
             id,
-            name: body.name.trim(),
+            name: body.name,
             categoryId: body.categoryId,
             estimatedPrice: body.estimatedPrice,
             userId: session.user.id,

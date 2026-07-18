@@ -3,25 +3,15 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { purchase, shoppingListItem, shoppingList } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, createPurchaseSchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/purchases/')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.shoppingListItemId || !body.actualPrice) {
-          return json({ error: 'shoppingListItemId and actualPrice are required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(createPurchaseSchema, await request.json())
 
         // Verify the shopping list item belongs to the user
         const [listItem] = await db

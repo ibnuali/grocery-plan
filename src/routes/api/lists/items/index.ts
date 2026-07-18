@@ -3,19 +3,14 @@ import { json } from '@tanstack/react-start'
 import { db } from '#/db'
 import { shoppingListItem, item, shoppingList } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { auth } from '#/lib/auth'
+import { requireAuth } from '#/lib/auth'
+import { validateBody, addListItemSchema, deleteListItemSchema } from '#/lib/validations'
 
 export const Route = createFileRoute('/api/lists/items/')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        const session = await requireAuth(request)
 
         const url = new URL(request.url)
         const listId = url.searchParams.get('listId')
@@ -50,19 +45,8 @@ export const Route = createFileRoute('/api/lists/items/')({
         return json({ items })
       },
       POST: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.shoppingListId || !body.itemId) {
-          return json({ error: 'shoppingListId and itemId are required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(addListItemSchema, await request.json())
 
         // Verify the list belongs to the user
         const [list] = await db
@@ -83,7 +67,7 @@ export const Route = createFileRoute('/api/lists/items/')({
             id,
             shoppingListId: body.shoppingListId,
             itemId: body.itemId,
-            quantity: body.quantity || 1,
+            quantity: body.quantity,
             createdAt: now,
           })
           .returning()
@@ -91,19 +75,8 @@ export const Route = createFileRoute('/api/lists/items/')({
         return json(newItem, { status: 201 })
       },
       DELETE: async ({ request }) => {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        })
-
-        if (!session?.user) {
-          return json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const body = await request.json()
-
-        if (!body.id) {
-          return json({ error: 'id is required' }, { status: 400 })
-        }
+        const session = await requireAuth(request)
+        const body = validateBody(deleteListItemSchema, await request.json())
 
         // Verify the item belongs to a list owned by the user
         const [owned] = await db
@@ -121,10 +94,9 @@ export const Route = createFileRoute('/api/lists/items/')({
           return json({ error: 'Item not found' }, { status: 404 })
         }
 
-        const [deleted] = await db
+        await db
           .delete(shoppingListItem)
           .where(eq(shoppingListItem.id, body.id))
-          .returning()
 
         return json({ success: true })
       },

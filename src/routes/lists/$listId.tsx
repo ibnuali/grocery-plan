@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, ShoppingCart, DollarSign } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
@@ -56,110 +57,88 @@ interface ListInfo {
 function ListDetailPage() {
   const { listId } = Route.useParams()
   const { data: session, isPending } = authClient.useSession()
-  const [listInfo, setListInfo] = useState<ListInfo | null>(null)
-  const [listItems, setListItems] = useState<ListItem[]>([])
-  const [availableItems, setAvailableItems] = useState<AvailableItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [actualPrice, setActualPrice] = useState('')
-  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(
-    null,
-  )
-  const [saving, setSaving] = useState(false)
+  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (session?.user && listId) {
-      Promise.all([fetchListInfo(), fetchListItems(), fetchAvailableItems()])
-    }
-  }, [session, listId])
+  const { data: listInfo, isLoading: listLoading } = useQuery({
+    queryKey: ['list', listId],
+    queryFn: () => apiGet<ListInfo>(`/api/lists/${listId}`),
+    enabled: !!session?.user && !!listId,
+  })
 
-  const fetchListInfo = async () => {
-    try {
-      const data = await apiGet<ListInfo>(`/api/lists/${listId}`)
-      setListInfo(data)
-    } catch (err) {
-      console.error('Failed to fetch list:', err)
-    }
-  }
+  const { data: listItemsData, isLoading: itemsLoading } = useQuery({
+    queryKey: ['listItems', listId],
+    queryFn: () => apiGet<{ items: ListItem[] }>(`/api/lists/items?listId=${listId}`),
+    enabled: !!session?.user && !!listId,
+  })
+  const listItems = listItemsData?.items ?? []
 
-  const fetchListItems = async () => {
-    try {
-      const data = await apiGet<{ items: ListItem[] }>(
-        `/api/lists/items?listId=${listId}`,
-      )
-      setListItems(data.items)
-    } catch (err) {
-      console.error('Failed to fetch list items:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: availableItemsData } = useQuery({
+    queryKey: ['items'],
+    queryFn: () => apiGet<{ items: AvailableItem[] }>('/api/items'),
+    enabled: !!session?.user,
+  })
+  const availableItems = availableItemsData?.items ?? []
 
-  const fetchAvailableItems = async () => {
-    try {
-      const data = await apiGet<{ items: AvailableItem[] }>('/api/items')
-      setAvailableItems(data.items)
-    } catch (err) {
-      console.error('Failed to fetch items:', err)
-    }
-  }
-
-  const handleAddItem = async () => {
-    if (!selectedItemId) return
-    setSaving(true)
-    setError('')
-
-    try {
-      await apiPost('/api/lists/items', {
+  const addItemMutation = useMutation({
+    mutationFn: () =>
+      apiPost('/api/lists/items', {
         shoppingListId: listId,
         itemId: selectedItemId,
         quantity: parseInt(quantity) || 1,
-      })
-      await fetchListItems()
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
       setAddDialogOpen(false)
       setSelectedItemId('')
       setQuantity('1')
-    } catch (err: any) {
-      setError(err.message || 'Failed to add item')
-    } finally {
-      setSaving(false)
-    }
-  }
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to add item'),
+  })
 
-  const handleRemoveItem = async (id: string) => {
-    if (!confirm('Remove this item from the list?')) return
+  const removeItemMutation = useMutation({
+    mutationFn: (id: string) => apiDelete('/api/lists/items', { id }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
+  })
 
-    try {
-      await apiDelete('/api/lists/items', { id })
-      await fetchListItems()
-    } catch (err) {
-      console.error('Failed to remove item:', err)
-    }
-  }
-
-  const handleRecordPurchase = async () => {
-    if (!selectedListItem || !actualPrice) return
-    setSaving(true)
-    setError('')
-
-    try {
-      await apiPost('/api/purchases', {
-        shoppingListItemId: selectedListItem.id,
+  const purchaseMutation = useMutation({
+    mutationFn: () =>
+      apiPost('/api/purchases', {
+        shoppingListItemId: selectedListItem!.id,
         actualPrice: Math.round(parseFloat(actualPrice) * 100),
-      })
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
       setPurchaseDialogOpen(false)
       setSelectedListItem(null)
       setActualPrice('')
-      await fetchListItems()
-    } catch (err: any) {
-      setError(err.message || 'Failed to record purchase')
-    } finally {
-      setSaving(false)
-    }
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to record purchase'),
+  })
+
+  const handleAddItem = () => {
+    if (!selectedItemId) return
+    setError('')
+    addItemMutation.mutate()
+  }
+
+  const handleRemoveItem = (id: string) => {
+    if (!confirm('Remove this item from the list?')) return
+    removeItemMutation.mutate(id)
+  }
+
+  const handleRecordPurchase = () => {
+    if (!selectedListItem || !actualPrice) return
+    setError('')
+    purchaseMutation.mutate()
   }
 
   const openPurchaseDialog = (listItem: ListItem) => {
@@ -174,7 +153,7 @@ function ListDetailPage() {
     0,
   )
 
-  if (isPending || loading) return <LoadingSpinner />
+  if (isPending || listLoading || itemsLoading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
@@ -273,9 +252,9 @@ function ListDetailPage() {
                     </Button>
                     <Button
                       onClick={handleAddItem}
-                      disabled={saving || !selectedItemId}
+                      disabled={addItemMutation.isPending || !selectedItemId}
                     >
-                      {saving ? 'Adding...' : 'Add Item'}
+                      {addItemMutation.isPending ? 'Adding...' : 'Add Item'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -409,9 +388,9 @@ function ListDetailPage() {
             </Button>
             <Button
               onClick={handleRecordPurchase}
-              disabled={saving || !actualPrice}
+              disabled={purchaseMutation.isPending || !actualPrice}
             >
-              {saving ? 'Saving...' : 'Save Purchase'}
+              {purchaseMutation.isPending ? 'Saving...' : 'Save Purchase'}
             </Button>
           </DialogFooter>
         </DialogContent>
