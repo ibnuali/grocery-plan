@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import {
@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
@@ -47,7 +48,7 @@ function CategoriesPage() {
   const fetchCategories = async () => {
     try {
       const data = await apiGet<{ categories: Category[] }>('/api/categories')
-      setCategories(data.categories || [])
+      setCategories(data.categories)
     } catch (err) {
       console.error('Failed to fetch categories:', err)
     } finally {
@@ -62,7 +63,9 @@ function CategoriesPage() {
 
     try {
       if (editingCategory) {
-        await apiPut(`/api/categories/${editingCategory.id}`, { name: categoryName.trim() })
+        await apiPut(`/api/categories/${editingCategory.id}`, {
+          name: categoryName.trim(),
+        })
       } else {
         await apiPost('/api/categories', { name: categoryName.trim() })
       }
@@ -107,7 +110,9 @@ function CategoriesPage() {
   if (!session?.user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to manage categories.</p>
+        <p className="text-muted-foreground">
+          Please sign in to manage categories.
+        </p>
       </div>
     )
   }
@@ -120,21 +125,30 @@ function CategoriesPage() {
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Categories</h1>
-              <p className="text-muted-foreground">Organize your items into categories</p>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
+                Categories
+              </h1>
+              <p className="text-muted-foreground">
+                Organize your items into categories
+              </p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={openCreateDialog}>
-                  <Plus className="size-4" />
-                  Add Category
-                </Button>
+              <DialogTrigger
+                className={cn(buttonVariants({ size: 'sm' }))}
+                onClick={openCreateDialog}
+              >
+                <Plus className="size-4" />
+                Add Category
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingCategory ? 'Edit Category' : 'New Category'}</DialogTitle>
+                  <DialogTitle>
+                    {editingCategory ? 'Edit Category' : 'New Category'}
+                  </DialogTitle>
                   <DialogDescription>
-                    {editingCategory ? 'Update the category name.' : 'Create a new category to organize your items.'}
+                    {editingCategory
+                      ? 'Update the category name.'
+                      : 'Create a new category to organize your items.'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -155,8 +169,16 @@ function CategoriesPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSave} disabled={saving || !categoryName.trim()}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving || !categoryName.trim()}
+                  >
                     {saving ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
@@ -167,8 +189,12 @@ function CategoriesPage() {
           {categories.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
               <Tag className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No categories yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first category to start organizing items.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No categories yet
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first category to start organizing items.
+              </p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
                 Add Category
@@ -188,7 +214,9 @@ function CategoriesPage() {
                         <Tag className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">{cat.name}</h3>
+                        <h3 className="font-semibold text-foreground">
+                          {cat.name}
+                        </h3>
                         <p className="text-xs text-muted-foreground">
                           Created {new Date(cat.createdAt).toLocaleDateString()}
                         </p>

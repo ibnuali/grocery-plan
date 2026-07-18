@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, ShoppingCart, DollarSign } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import {
@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
@@ -64,7 +65,9 @@ function ListDetailPage() {
   const [selectedItemId, setSelectedItemId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [actualPrice, setActualPrice] = useState('')
-  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(null)
+  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(
+    null,
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -85,8 +88,10 @@ function ListDetailPage() {
 
   const fetchListItems = async () => {
     try {
-      const data = await apiGet<{ items: ListItem[] }>(`/api/lists/items?listId=${listId}`)
-      setListItems(data.items || [])
+      const data = await apiGet<{ items: ListItem[] }>(
+        `/api/lists/items?listId=${listId}`,
+      )
+      setListItems(data.items)
     } catch (err) {
       console.error('Failed to fetch list items:', err)
     } finally {
@@ -97,7 +102,7 @@ function ListDetailPage() {
   const fetchAvailableItems = async () => {
     try {
       const data = await apiGet<{ items: AvailableItem[] }>('/api/items')
-      setAvailableItems(data.items || [])
+      setAvailableItems(data.items)
     } catch (err) {
       console.error('Failed to fetch items:', err)
     }
@@ -164,14 +169,19 @@ function ListDetailPage() {
     setPurchaseDialogOpen(true)
   }
 
-  const totalEstimated = listItems.reduce((sum, item) => sum + (item.estimatedPrice * item.quantity), 0)
+  const totalEstimated = listItems.reduce(
+    (sum, item) => sum + item.estimatedPrice * item.quantity,
+    0,
+  )
 
   if (isPending || loading) return <LoadingSpinner />
 
   if (!session?.user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to view this list.</p>
+        <p className="text-muted-foreground">
+          Please sign in to view this list.
+        </p>
       </div>
     )
   }
@@ -191,25 +201,32 @@ function ListDetailPage() {
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in mb-8">
-            <Link to="/lists" className="text-sm text-muted-foreground hover:text-foreground mb-2 inline-block no-underline">
+            <Link
+              to="/lists"
+              className="text-sm text-muted-foreground hover:text-foreground mb-2 inline-block no-underline"
+            >
               ← Back to Lists
             </Link>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">{listInfo.name}</h1>
-                <p className="text-muted-foreground capitalize">{listInfo.period} list</p>
+                <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
+                  {listInfo.name}
+                </h1>
+                <p className="text-muted-foreground capitalize">
+                  {listInfo.period} list
+                </p>
               </div>
               <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="size-4" />
-                    Add Item
-                  </Button>
+                <DialogTrigger className={cn(buttonVariants({ size: 'sm' }))}>
+                  <Plus className="size-4" />
+                  Add Item
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Add Item to List</DialogTitle>
-                    <DialogDescription>Select an item and set the quantity.</DialogDescription>
+                    <DialogDescription>
+                      Select an item and set the quantity.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     {error && (
@@ -219,7 +236,10 @@ function ListDetailPage() {
                     )}
                     <div className="space-y-2">
                       <Label htmlFor="item-select">Item</Label>
-                      <Select value={selectedItemId} onValueChange={setSelectedItemId}>
+                      <Select
+                        value={selectedItemId}
+                        onValueChange={(v) => setSelectedItemId(v ?? '')}
+                      >
                         <SelectTrigger className="w-full bg-background">
                           <SelectValue placeholder="Select an item" />
                         </SelectTrigger>
@@ -245,8 +265,16 @@ function ListDetailPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddItem} disabled={saving || !selectedItemId}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setAddDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleAddItem}
+                      disabled={saving || !selectedItemId}
+                    >
                       {saving ? 'Adding...' : 'Add Item'}
                     </Button>
                   </DialogFooter>
@@ -260,11 +288,15 @@ function ListDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total estimated</p>
-                <p className="tabular display-title text-2xl font-semibold text-foreground">{formatPrice(totalEstimated)}</p>
+                <p className="tabular display-title text-2xl font-semibold text-foreground">
+                  {formatPrice(totalEstimated)}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Items</p>
-                <p className="tabular display-title text-2xl font-semibold text-foreground">{listItems.length}</p>
+                <p className="tabular display-title text-2xl font-semibold text-foreground">
+                  {listItems.length}
+                </p>
               </div>
             </div>
           </div>
@@ -273,8 +305,12 @@ function ListDetailPage() {
           {listItems.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
               <ShoppingCart className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No items in this list</h3>
-              <p className="text-muted-foreground mb-4">Add items from your catalog to start planning.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No items in this list
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Add items from your catalog to start planning.
+              </p>
               <Button size="sm" onClick={() => setAddDialogOpen(true)}>
                 <Plus className="size-4" />
                 Add Item
@@ -293,9 +329,12 @@ function ListDetailPage() {
                       <ShoppingCart className="size-5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{listItem.itemName}</h3>
+                      <h3 className="font-semibold text-foreground truncate">
+                        {listItem.itemName}
+                      </h3>
                       <p className="tabular text-sm text-muted-foreground">
-                        Qty {listItem.quantity} × {formatPrice(listItem.estimatedPrice)}
+                        Qty {listItem.quantity} ×{' '}
+                        {formatPrice(listItem.estimatedPrice)}
                       </p>
                     </div>
                   </div>
@@ -344,7 +383,9 @@ function ListDetailPage() {
             <div className="p-4 rounded-md surface-2">
               <p className="text-sm text-muted-foreground">Estimated price</p>
               <p className="tabular text-lg font-semibold text-foreground">
-                {selectedListItem ? formatPrice(selectedListItem.estimatedPrice) : '—'}
+                {selectedListItem
+                  ? formatPrice(selectedListItem.estimatedPrice)
+                  : '—'}
               </p>
             </div>
             <div className="space-y-2">
@@ -360,8 +401,16 @@ function ListDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPurchaseDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleRecordPurchase} disabled={saving || !actualPrice}>
+            <Button
+              variant="outline"
+              onClick={() => setPurchaseDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRecordPurchase}
+              disabled={saving || !actualPrice}
+            >
               {saving ? 'Saving...' : 'Save Purchase'}
             </Button>
           </DialogFooter>

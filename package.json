@@ -21,6 +21,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/match-sorter-utils": "latest",
     "@tanstack/react-devtools": "latest",
@@ -39,7 +40,6 @@
     "lucide-react": "^0.577.0",
     "nitro": "npm:nitro-nightly@latest",
     "pg": "^8.16.3",
-    "radix-ui": "^1.6.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.0.2",

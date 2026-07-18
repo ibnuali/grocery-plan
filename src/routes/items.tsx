@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, Pencil, Trash2, Package } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import {
@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
@@ -71,7 +72,7 @@ function ItemsPage() {
   const fetchItems = async () => {
     try {
       const data = await apiGet<{ items: Item[] }>('/api/items')
-      setItems(data.items || [])
+      setItems(data.items)
     } catch (err) {
       console.error('Failed to fetch items:', err)
     } finally {
@@ -82,7 +83,7 @@ function ItemsPage() {
   const fetchCategories = async () => {
     try {
       const data = await apiGet<{ categories: Category[] }>('/api/categories')
-      setCategories(data.categories || [])
+      setCategories(data.categories)
     } catch (err) {
       console.error('Failed to fetch categories:', err)
     }
@@ -165,21 +166,30 @@ function ItemsPage() {
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Items</h1>
-              <p className="text-muted-foreground">Manage your grocery item catalog</p>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
+                Items
+              </h1>
+              <p className="text-muted-foreground">
+                Manage your grocery item catalog
+              </p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={openCreateDialog}>
-                  <Plus className="size-4" />
-                  Add Item
-                </Button>
+              <DialogTrigger
+                className={cn(buttonVariants({ size: 'sm' }))}
+                onClick={openCreateDialog}
+              >
+                <Plus className="size-4" />
+                Add Item
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingItem ? 'Edit Item' : 'New Item'}</DialogTitle>
+                  <DialogTitle>
+                    {editingItem ? 'Edit Item' : 'New Item'}
+                  </DialogTitle>
                   <DialogDescription>
-                    {editingItem ? 'Update the item details.' : 'Add a new item to your catalog.'}
+                    {editingItem
+                      ? 'Update the item details.'
+                      : 'Add a new item to your catalog.'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -200,7 +210,10 @@ function ItemsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="item-category">Category</Label>
-                    <Select value={itemCategoryId} onValueChange={setItemCategoryId}>
+                    <Select
+                      value={itemCategoryId}
+                      onValueChange={(v) => setItemCategoryId(v ?? '')}
+                    >
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
@@ -226,8 +239,21 @@ function ItemsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSave} disabled={saving || !itemName.trim() || !itemCategoryId || !itemPrice}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={
+                      saving ||
+                      !itemName.trim() ||
+                      !itemCategoryId ||
+                      !itemPrice
+                    }
+                  >
                     {saving ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
@@ -238,8 +264,12 @@ function ItemsPage() {
           {items.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
               <Package className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No items yet</h3>
-              <p className="text-muted-foreground mb-4">Add your first grocery item to start tracking prices.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No items yet
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Add your first grocery item to start tracking prices.
+              </p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
                 Add Item
@@ -259,8 +289,12 @@ function ItemsPage() {
                         <Package className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">{item.name}</h3>
-                        <p className="text-xs text-muted-foreground">{categoryMap[item.categoryId] || 'Unknown'}</p>
+                        <h3 className="font-semibold text-foreground">
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {categoryMap[item.categoryId] || 'Unknown'}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -282,8 +316,12 @@ function ItemsPage() {
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border">
-                    <p className="text-sm text-muted-foreground">Estimated price</p>
-                    <p className="tabular text-lg font-semibold text-foreground">{formatPrice(item.estimatedPrice)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Estimated price
+                    </p>
+                    <p className="tabular text-lg font-semibold text-foreground">
+                      {formatPrice(item.estimatedPrice)}
+                    </p>
                   </div>
                 </div>
               ))}

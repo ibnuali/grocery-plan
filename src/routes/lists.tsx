@@ -1,8 +1,15 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, ClipboardList, CalendarDays, ShoppingCart } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ClipboardList,
+  CalendarDays,
+  ShoppingCart,
+} from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import {
@@ -21,6 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
@@ -60,7 +68,7 @@ function ListsPage() {
   const fetchLists = async () => {
     try {
       const data = await apiGet<{ lists: ShoppingList[] }>('/api/lists')
-      setLists(data.lists || [])
+      setLists(data.lists)
     } catch (err) {
       console.error('Failed to fetch lists:', err)
     } finally {
@@ -144,7 +152,9 @@ function ListsPage() {
   if (!session?.user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to manage shopping lists.</p>
+        <p className="text-muted-foreground">
+          Please sign in to manage shopping lists.
+        </p>
       </div>
     )
   }
@@ -157,21 +167,30 @@ function ListsPage() {
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
             <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">Shopping Lists</h1>
-              <p className="text-muted-foreground">Plan your weekly and monthly grocery trips</p>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
+                Shopping Lists
+              </h1>
+              <p className="text-muted-foreground">
+                Plan your weekly and monthly grocery trips
+              </p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={openCreateDialog}>
-                  <Plus className="size-4" />
-                  New List
-                </Button>
+              <DialogTrigger
+                className={cn(buttonVariants({ size: 'sm' }))}
+                onClick={openCreateDialog}
+              >
+                <Plus className="size-4" />
+                New List
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingList ? 'Edit List' : 'New Shopping List'}</DialogTitle>
+                  <DialogTitle>
+                    {editingList ? 'Edit List' : 'New Shopping List'}
+                  </DialogTitle>
                   <DialogDescription>
-                    {editingList ? 'Update the list details.' : 'Create a new shopping list for your next trip.'}
+                    {editingList
+                      ? 'Update the list details.'
+                      : 'Create a new shopping list for your next trip.'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -192,7 +211,10 @@ function ListsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="list-period">Period</Label>
-                    <Select value={listPeriod} onValueChange={setListPeriod}>
+                    <Select
+                      value={listPeriod}
+                      onValueChange={(v) => setListPeriod(v ?? 'weekly')}
+                    >
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue />
                       </SelectTrigger>
@@ -226,8 +248,21 @@ function ListsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSave} disabled={saving || !listName.trim() || !listStartDate || !listEndDate}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={
+                      saving ||
+                      !listName.trim() ||
+                      !listStartDate ||
+                      !listEndDate
+                    }
+                  >
                     {saving ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
@@ -238,8 +273,12 @@ function ListsPage() {
           {lists.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
               <ClipboardList className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No shopping lists yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first list to start planning your grocery trips.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No shopping lists yet
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first list to start planning your grocery trips.
+              </p>
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="size-4" />
                 New List
@@ -266,7 +305,9 @@ function ListsPage() {
                         >
                           {list.name}
                         </Link>
-                        <p className="text-xs text-muted-foreground capitalize">{list.period}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {list.period}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -290,7 +331,10 @@ function ListsPage() {
                   <div className="mt-4 pt-4 border-t border-border">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CalendarDays className="size-4" />
-                      <span className="tabular">{formatDate(list.startDate)} – {formatDate(list.endDate)}</span>
+                      <span className="tabular">
+                        {formatDate(list.startDate)} –{' '}
+                        {formatDate(list.endDate)}
+                      </span>
                     </div>
                   </div>
                 </div>

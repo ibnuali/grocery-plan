@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ClipboardList,
   Tag,
@@ -34,7 +34,9 @@ function Home() {
 
       <footer className="site-footer mt-auto">
         <div className="page-wrap flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-6 py-6 text-sm text-muted-foreground">
-          <span className="display-title font-semibold text-foreground">Grocery</span>
+          <span className="display-title font-semibold text-foreground">
+            Grocery
+          </span>
           <p>Plan smart, shop smart.</p>
           <p className="tabular">&copy; {new Date().getFullYear()}</p>
         </div>
@@ -44,9 +46,24 @@ function Home() {
 }
 
 const quickActions = [
-  { icon: ClipboardList, title: 'Shopping Lists', desc: 'Plan your next trip', href: '/lists' as const },
-  { icon: Package, title: 'Item Catalog', desc: 'Manage your items', href: '/items' as const },
-  { icon: Tag, title: 'Categories', desc: 'Organize by type', href: '/categories' as const },
+  {
+    icon: ClipboardList,
+    title: 'Shopping Lists',
+    desc: 'Plan your next trip',
+    href: '/lists' as const,
+  },
+  {
+    icon: Package,
+    title: 'Item Catalog',
+    desc: 'Manage your items',
+    href: '/items' as const,
+  },
+  {
+    icon: Tag,
+    title: 'Categories',
+    desc: 'Organize by type',
+    href: '/categories' as const,
+  },
 ]
 
 function AuthenticatedView({ name }: { name: string }) {
@@ -73,7 +90,9 @@ function AuthenticatedView({ name }: { name: string }) {
               <f.icon className="size-5" />
             </div>
             <h3 className="font-semibold text-foreground mb-1">{f.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {f.desc}
+            </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
               Open
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -109,6 +128,8 @@ const guestFeatures = [
 ] as const
 
 function GuestView() {
+  const navigate = useNavigate()
+
   return (
     <div className="page-wrap px-4 sm:px-6">
       {/* Marquee hero — the statement carries the fold */}
@@ -122,11 +143,15 @@ function GuestView() {
           always know what to buy and how much it costs.
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-8">
-          <Button size="lg" asChild className="w-full sm:w-auto">
-            <Link to="/signup">Start free</Link>
+          <Button size="lg" onClick={() => navigate({ to: '/signup' })}>
+            Start free
           </Button>
-          <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-            <Link to="/login">Sign in</Link>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => navigate({ to: '/login' })}
+          >
+            Sign in
           </Button>
         </div>
       </section>
@@ -147,8 +172,12 @@ function GuestView() {
               <div className="icon-badge size-11 rounded-md mb-4">
                 <f.icon className="size-5" />
               </div>
-              <h3 className="font-semibold text-foreground text-lg mb-1">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+              <h3 className="font-semibold text-foreground text-lg mb-1">
+                {f.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {f.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -160,16 +189,30 @@ function GuestView() {
         </h2>
         <ol className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6">
           {[
-            { step: '1', title: 'Add items', desc: 'Create your master list of grocery items with categories and prices.' },
-            { step: '2', title: 'Track purchases', desc: 'Log what you bought and at what price each time you shop.' },
-            { step: '3', title: 'See trends', desc: 'View how your prices change across weeks and months.' },
+            {
+              step: '1',
+              title: 'Add items',
+              desc: 'Create your master list of grocery items with categories and prices.',
+            },
+            {
+              step: '2',
+              title: 'Track purchases',
+              desc: 'Log what you bought and at what price each time you shop.',
+            },
+            {
+              step: '3',
+              title: 'See trends',
+              desc: 'View how your prices change across weeks and months.',
+            },
           ].map((s) => (
             <li key={s.step} className="flex flex-col">
               <span className="display-title tabular text-4xl font-semibold text-primary leading-none mb-3">
                 {s.step}
               </span>
               <h4 className="font-semibold text-foreground mb-1">{s.title}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {s.desc}
+              </p>
             </li>
           ))}
         </ol>

@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ShoppingBasket } from 'lucide-react'
-import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button'
+import { cn } from '#/lib/utils'
 import BetterAuthHeader from '#/integrations/better-auth/header-user'
 
 interface AppHeaderProps {
@@ -23,7 +24,9 @@ export function AppHeader({ session, activeRoute }: AppHeaderProps) {
           <div className="icon-badge size-9 rounded-md">
             <ShoppingBasket className="size-5" />
           </div>
-          <span className="display-title text-xl font-semibold text-foreground">Grocery</span>
+          <span className="display-title text-xl font-semibold text-foreground">
+            Grocery
+          </span>
         </Link>
 
         {session?.user ? (
@@ -44,14 +47,7 @@ export function AppHeader({ session, activeRoute }: AppHeaderProps) {
             <BetterAuthHeader />
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild className="shadow-sm hover:shadow-md">
-              <Link to="/signup">Sign Up</Link>
-            </Button>
-          </div>
+          <></>
         )}
       </div>
     </header>
