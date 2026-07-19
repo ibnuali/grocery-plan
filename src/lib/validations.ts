@@ -66,6 +66,7 @@ export const updateListItemSchema = z.object({
   quantity: z.number().int().positive().optional(),
   unit: z.string().trim().nullable().optional(),
   notes: z.string().trim().nullable().optional(),
+  purchased: z.boolean().optional(),
 })
 
 export const deleteListItemSchema = z.object({

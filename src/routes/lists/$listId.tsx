@@ -28,6 +28,7 @@ import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 import { Textarea } from '#/components/ui/textarea'
+import { Switch } from '#/components/ui/switch'
 import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/lists/$listId')({
@@ -40,6 +41,7 @@ interface ListItem {
   quantity: number
   unit: string | null
   notes: string | null
+  purchased: boolean
   itemName: string
   estimatedPrice: number
 }
@@ -176,6 +178,16 @@ function ListDetailPage() {
       setError('')
     },
     onError: (err: any) => setError(err.message || 'Failed to update item'),
+  })
+
+  const togglePurchasedMutation = useMutation({
+    mutationFn: (listItem: ListItem) =>
+      apiPut('/api/lists/items', {
+        id: listItem.id,
+        purchased: !listItem.purchased,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
+    onError: (err: any) => toast(err.message || 'Failed to update', 'destructive'),
   })
 
   const purchaseMutation = useMutation({
@@ -435,6 +447,11 @@ function ListDetailPage() {
                 <p className="text-sm text-muted-foreground">Items</p>
                 <p className="tabular display-title text-2xl font-semibold text-foreground">
                   {listItems.length}
+                  {listItems.some(i => i.purchased) && (
+                    <span className="text-base text-muted-foreground">
+                      {' '}({listItems.filter(i => i.purchased).length} bought)
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -468,15 +485,25 @@ function ListDetailPage() {
               {listItems.map((listItem, i) => (
                 <div
                   key={listItem.id}
-                  className="rise-in tile rounded-lg p-4 flex items-center justify-between gap-3"
+                  className={cn(
+                    "rise-in tile rounded-lg p-4 flex items-center justify-between gap-3 transition-opacity",
+                    listItem.purchased && "opacity-50",
+                  )}
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="icon-badge size-10 rounded-md shrink-0">
-                      <ShoppingCart className="size-5" />
-                    </div>
+                    <Switch
+                      size="default"
+                      checked={listItem.purchased}
+                      onCheckedChange={() => togglePurchasedMutation.mutate(listItem)}
+                      disabled={togglePurchasedMutation.isPending}
+                      aria-label={`Mark ${listItem.itemName} as purchased`}
+                    />
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
+                      <h3 className={cn(
+                        "font-semibold text-foreground truncate",
+                        listItem.purchased && "line-through text-muted-foreground",
+                      )}>
                         {listItem.itemName}
                       </h3>
                       <p className="tabular text-sm text-muted-foreground">
@@ -494,7 +521,10 @@ function ListDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <p className="tabular font-semibold text-foreground mr-2 hidden sm:block">
+                    <p className={cn(
+                      "tabular font-semibold text-foreground mr-2 hidden sm:block",
+                      listItem.purchased && "line-through text-muted-foreground",
+                    )}>
                       {formatPrice(listItem.estimatedPrice * listItem.quantity)}
                     </p>
                     <Button

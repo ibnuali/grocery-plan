@@ -36,6 +36,7 @@ export const Route = createFileRoute('/api/lists/items/')({
             quantity: shoppingListItem.quantity,
             unit: shoppingListItem.unit,
             notes: shoppingListItem.notes,
+            purchased: shoppingListItem.purchased,
             createdAt: shoppingListItem.createdAt,
             itemName: item.name,
             estimatedPrice: item.estimatedPrice,
@@ -100,6 +101,7 @@ export const Route = createFileRoute('/api/lists/items/')({
         if (body.quantity !== undefined) updates.quantity = body.quantity
         if (body.unit !== undefined) updates.unit = body.unit
         if (body.notes !== undefined) updates.notes = body.notes
+        if (body.purchased !== undefined) updates.purchased = body.purchased
 
         const [updated] = await db
           .update(shoppingListItem)
