@@ -227,6 +227,7 @@ function ItemsPage() {
                     <Select
                       value={itemCategoryId}
                       onValueChange={(v) => setItemCategoryId(v ?? '')}
+                      items={categories.map((c) => ({ value: c.id, label: c.name }))}
                     >
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select a category" />
