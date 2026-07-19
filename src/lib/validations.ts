@@ -65,6 +65,14 @@ export const deleteListItemSchema = z.object({
   id: z.string().min(1, 'id is required'),
 })
 
+export const quickAddListItemSchema = z.object({
+  shoppingListId: z.string().min(1, 'shoppingListId is required'),
+  name: z.string().trim().min(1, 'Name is required'),
+  quantity: z.number().int().positive().default(1),
+  unit: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+})
+
 export const createPurchaseSchema = z.object({
   shoppingListItemId: z.string().min(1, 'shoppingListItemId is required'),
   actualPrice: z.number().int().nonnegative('Price must be non-negative'),

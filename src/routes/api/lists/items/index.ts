@@ -34,6 +34,8 @@ export const Route = createFileRoute('/api/lists/items/')({
             id: shoppingListItem.id,
             itemId: shoppingListItem.itemId,
             quantity: shoppingListItem.quantity,
+            unit: shoppingListItem.unit,
+            notes: shoppingListItem.notes,
             createdAt: shoppingListItem.createdAt,
             itemName: item.name,
             estimatedPrice: item.estimatedPrice,

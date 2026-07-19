@@ -175,6 +175,8 @@ export const shoppingListItem = pgTable('shopping_list_item', {
     .notNull()
     .references(() => item.id, { onDelete: 'cascade' }),
   quantity: integer('quantity').notNull().default(1),
+  unit: text('unit'),
+  notes: text('notes'),
   createdAt: timestamp('created_at').notNull(),
 }, (t) => [
   index('shopping_list_item_list_id_idx').on(t.shoppingListId),

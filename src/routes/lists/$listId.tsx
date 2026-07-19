@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus, CornerDownLeft } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -37,6 +37,8 @@ interface ListItem {
   id: string
   itemId: string
   quantity: number
+  unit: string | null
+  notes: string | null
   itemName: string
   estimatedPrice: number
 }
@@ -77,6 +79,8 @@ function ListDetailPage() {
   const [actualPrice, setActualPrice] = useState('')
   const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(null)
   const [error, setError] = useState('')
+  const [quickName, setQuickName] = useState('')
+  const [quickQuantity, setQuickQuantity] = useState('1')
 
   const { data: listInfo, isLoading: listLoading, error: listError } = useQuery({
     queryKey: ['list', listId],
@@ -130,6 +134,22 @@ function ListDetailPage() {
     onError: (err: any) => setError(err.message || 'Failed to add item'),
   })
 
+  const quickAddMutation = useMutation({
+    mutationFn: () =>
+      apiPost('/api/lists/items/add', {
+        shoppingListId: listId,
+        name: quickName.trim(),
+        quantity: parseInt(quickQuantity) || 1,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+      setQuickName('')
+      setQuickQuantity('1')
+    },
+    onError: (err: any) => toast(err.message || 'Failed to add item', 'destructive'),
+  })
+
   const removeItemMutation = useMutation({
     mutationFn: (id: string) => apiDelete('/api/lists/items', { id }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
@@ -169,6 +189,18 @@ function ListDetailPage() {
     if (!selectedItemId) return
     setError('')
     addItemMutation.mutate()
+  }
+
+  const handleQuickAdd = () => {
+    if (!quickName.trim()) return
+    quickAddMutation.mutate()
+  }
+
+  const handleQuickAddKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && quickName.trim()) {
+      e.preventDefault()
+      handleQuickAdd()
+    }
   }
 
   const handleRemoveItem = (id: string) => {
@@ -303,6 +335,56 @@ function ListDetailPage() {
             </div>
           </div>
 
+          {/* Quick Add */}
+          <div className="rise-in surface-2 rounded-lg p-4 mb-6">
+            <div className="flex items-end gap-3">
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="quick-name" className="text-xs text-muted-foreground">
+                  Add a product
+                </Label>
+                <Input
+                  id="quick-name"
+                  value={quickName}
+                  onChange={(e) => setQuickName(e.target.value)}
+                  onKeyDown={handleQuickAddKeyDown}
+                  placeholder="Type a product name, e.g. Rice, Milk, Eggs"
+                  className="bg-background"
+                />
+              </div>
+              <div className="w-24 space-y-1.5">
+                <Label htmlFor="quick-qty" className="text-xs text-muted-foreground">
+                  Qty
+                </Label>
+                <Input
+                  id="quick-qty"
+                  type="number"
+                  min="1"
+                  value={quickQuantity}
+                  onChange={(e) => setQuickQuantity(e.target.value)}
+                  onKeyDown={handleQuickAddKeyDown}
+                  className="bg-background"
+                />
+              </div>
+              <Button
+                onClick={handleQuickAdd}
+                disabled={quickAddMutation.isPending || !quickName.trim()}
+                className="shrink-0"
+              >
+                {quickAddMutation.isPending ? (
+                  'Adding…'
+                ) : (
+                  <>
+                    <CornerDownLeft className="size-4" />
+                    Add
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Press Enter or click Add. For catalog items with price tracking, use the catalog dialog.
+            </p>
+          </div>
+
           {/* Summary */}
           <div className="rise-in surface-2 rounded-lg p-5 mb-6">
             <div className="flex items-center justify-between">
@@ -361,9 +443,17 @@ function ListDetailPage() {
                         {listItem.itemName}
                       </h3>
                       <p className="tabular text-sm text-muted-foreground">
-                        Qty {listItem.quantity} ×{' '}
-                        {formatPrice(listItem.estimatedPrice)}
+                        Qty {listItem.quantity}
+                        {listItem.unit ? ` ${listItem.unit}` : ''}
+                        {listItem.estimatedPrice > 0 && (
+                          <> × {formatPrice(listItem.estimatedPrice)}</>
+                        )}
                       </p>
+                      {listItem.notes && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {listItem.notes}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
