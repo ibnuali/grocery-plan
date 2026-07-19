@@ -22,6 +22,20 @@
       "when": 1784500000000,
       "tag": "0002_seed_global_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784600000000,
+      "tag": "0003_add_list_item_unit_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784700000000,
+      "tag": "0004_add_list_item_purchased",
+      "breakpoints": true
     }
   ]
 }

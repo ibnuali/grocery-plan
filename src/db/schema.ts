@@ -177,6 +177,7 @@ export const shoppingListItem = pgTable('shopping_list_item', {
   quantity: integer('quantity').notNull().default(1),
   unit: text('unit'),
   notes: text('notes'),
+  purchased: boolean('purchased').notNull().default(false),
   createdAt: timestamp('created_at').notNull(),
 }, (t) => [
   index('shopping_list_item_list_id_idx').on(t.shoppingListId),
