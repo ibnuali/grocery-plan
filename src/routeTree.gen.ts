@@ -9,41 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ListsRouteImport } from './routes/lists'
-import { Route as ItemsRouteImport } from './routes/items'
-import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as ItemsRouteImport } from './routes/items'
+import { Route as ListsRouteImport } from './routes/lists'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ListsListIdRouteImport } from './routes/lists/$listId'
-import { Route as ApiPurchasesIndexRouteImport } from './routes/api/purchases/index'
-import { Route as ApiListsIndexRouteImport } from './routes/api/lists/index'
-import { Route as ApiItemsIndexRouteImport } from './routes/api/items/index'
-import { Route as ApiCategoriesIndexRouteImport } from './routes/api/categories/index'
-import { Route as ApiListsSplatRouteImport } from './routes/api/lists/$'
-import { Route as ApiItemsSplatRouteImport } from './routes/api/items/$'
-import { Route as ApiCategoriesSplatRouteImport } from './routes/api/categories/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiCategoriesIndexRouteImport } from './routes/api/categories/index'
+import { Route as ApiCategoriesSplatRouteImport } from './routes/api/categories/$'
+import { Route as ApiItemsIndexRouteImport } from './routes/api/items/index'
+import { Route as ApiItemsSplatRouteImport } from './routes/api/items/$'
+import { Route as ApiListsIndexRouteImport } from './routes/api/lists/index'
+import { Route as ApiListsSplatRouteImport } from './routes/api/lists/$'
+import { Route as ApiPurchasesIndexRouteImport } from './routes/api/purchases/index'
 import { Route as ApiListsItemsIndexRouteImport } from './routes/api/lists/items/index'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListsRoute = ListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ItemsRoute = ItemsRouteImport.update({
-  id: '/items',
-  path: '/items',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriesRoute = CategoriesRouteImport.update({
@@ -51,9 +36,24 @@ const CategoriesRoute = CategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ItemsRoute = ItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsRoute = ListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListsListIdRoute = ListsListIdRouteImport.update({
@@ -61,19 +61,9 @@ const ListsListIdRoute = ListsListIdRouteImport.update({
   path: '/$listId',
   getParentRoute: () => ListsRoute,
 } as any)
-const ApiPurchasesIndexRoute = ApiPurchasesIndexRouteImport.update({
-  id: '/api/purchases/',
-  path: '/api/purchases/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiListsIndexRoute = ApiListsIndexRouteImport.update({
-  id: '/api/lists/',
-  path: '/api/lists/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiItemsIndexRoute = ApiItemsIndexRouteImport.update({
-  id: '/api/items/',
-  path: '/api/items/',
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCategoriesIndexRoute = ApiCategoriesIndexRouteImport.update({
@@ -81,9 +71,14 @@ const ApiCategoriesIndexRoute = ApiCategoriesIndexRouteImport.update({
   path: '/api/categories/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiListsSplatRoute = ApiListsSplatRouteImport.update({
-  id: '/api/lists/$',
-  path: '/api/lists/$',
+const ApiCategoriesSplatRoute = ApiCategoriesSplatRouteImport.update({
+  id: '/api/categories/$',
+  path: '/api/categories/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiItemsIndexRoute = ApiItemsIndexRouteImport.update({
+  id: '/api/items/',
+  path: '/api/items/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiItemsSplatRoute = ApiItemsSplatRouteImport.update({
@@ -91,14 +86,19 @@ const ApiItemsSplatRoute = ApiItemsSplatRouteImport.update({
   path: '/api/items/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiCategoriesSplatRoute = ApiCategoriesSplatRouteImport.update({
-  id: '/api/categories/$',
-  path: '/api/categories/$',
+const ApiListsIndexRoute = ApiListsIndexRouteImport.update({
+  id: '/api/lists/',
+  path: '/api/lists/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+const ApiListsSplatRoute = ApiListsSplatRouteImport.update({
+  id: '/api/lists/$',
+  path: '/api/lists/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPurchasesIndexRoute = ApiPurchasesIndexRouteImport.update({
+  id: '/api/purchases/',
+  path: '/api/purchases/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiListsItemsIndexRoute = ApiListsItemsIndexRouteImport.update({
@@ -239,32 +239,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lists': {
-      id: '/lists'
-      path: '/lists'
-      fullPath: '/lists'
-      preLoaderRoute: typeof ListsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/items': {
-      id: '/items'
-      path: '/items'
-      fullPath: '/items'
-      preLoaderRoute: typeof ItemsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categories': {
@@ -274,11 +253,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/items': {
+      id: '/items'
+      path: '/items'
+      fullPath: '/items'
+      preLoaderRoute: typeof ItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists': {
+      id: '/lists'
+      path: '/lists'
+      fullPath: '/lists'
+      preLoaderRoute: typeof ListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/$listId': {
@@ -288,25 +288,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListsListIdRouteImport
       parentRoute: typeof ListsRoute
     }
-    '/api/purchases/': {
-      id: '/api/purchases/'
-      path: '/api/purchases'
-      fullPath: '/api/purchases/'
-      preLoaderRoute: typeof ApiPurchasesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/lists/': {
-      id: '/api/lists/'
-      path: '/api/lists'
-      fullPath: '/api/lists/'
-      preLoaderRoute: typeof ApiListsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/items/': {
-      id: '/api/items/'
-      path: '/api/items'
-      fullPath: '/api/items/'
-      preLoaderRoute: typeof ApiItemsIndexRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/categories/': {
@@ -316,11 +302,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCategoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/lists/$': {
-      id: '/api/lists/$'
-      path: '/api/lists/$'
-      fullPath: '/api/lists/$'
-      preLoaderRoute: typeof ApiListsSplatRouteImport
+    '/api/categories/$': {
+      id: '/api/categories/$'
+      path: '/api/categories/$'
+      fullPath: '/api/categories/$'
+      preLoaderRoute: typeof ApiCategoriesSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/items/': {
+      id: '/api/items/'
+      path: '/api/items'
+      fullPath: '/api/items/'
+      preLoaderRoute: typeof ApiItemsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/items/$': {
@@ -330,18 +323,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiItemsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/categories/$': {
-      id: '/api/categories/$'
-      path: '/api/categories/$'
-      fullPath: '/api/categories/$'
-      preLoaderRoute: typeof ApiCategoriesSplatRouteImport
+    '/api/lists/': {
+      id: '/api/lists/'
+      path: '/api/lists'
+      fullPath: '/api/lists/'
+      preLoaderRoute: typeof ApiListsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+    '/api/lists/$': {
+      id: '/api/lists/$'
+      path: '/api/lists/$'
+      fullPath: '/api/lists/$'
+      preLoaderRoute: typeof ApiListsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/purchases/': {
+      id: '/api/purchases/'
+      path: '/api/purchases'
+      fullPath: '/api/purchases/'
+      preLoaderRoute: typeof ApiPurchasesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/lists/items/': {

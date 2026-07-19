@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Plus,
@@ -33,6 +33,8 @@ import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
+import { toast } from '#/lib/toast'
+import { Copy } from 'lucide-react'
 
 export const Route = createFileRoute('/lists')({
   component: ListsPage,
@@ -58,12 +60,16 @@ function ListsPage() {
   const [listEndDate, setListEndDate] = useState('')
   const [error, setError] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error: listsError } = useQuery({
     queryKey: ['lists'],
     queryFn: () => apiGet<{ lists: ShoppingList[] }>('/api/lists'),
     enabled: !!session?.user,
   })
   const lists = data?.lists ?? []
+
+  useEffect(() => {
+    if (listsError) toast('Failed to load lists', 'destructive')
+  }, [listsError])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -94,6 +100,38 @@ function ListsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiDelete(`/api/lists/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lists'] }),
+  })
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (list: ShoppingList) => {
+      // Create new list with fresh dates
+      const today = new Date()
+      const endDate = new Date(today)
+      endDate.setDate(endDate.getDate() + (list.period === 'monthly' ? 30 : 7))
+      const newList = await apiPost<ShoppingList>('/api/lists', {
+        name: `${list.name} (Copy)`,
+        period: list.period,
+        startDate: today.toISOString(),
+        endDate: endDate.toISOString(),
+      })
+      // Copy items from the original list
+      const { items } = await apiGet<{ items: Array<{ itemId: string; quantity: number }> }>(
+        `/api/lists/items?listId=${list.id}`,
+      )
+      for (const item of items) {
+        await apiPost('/api/lists/items', {
+          shoppingListId: newList.id,
+          itemId: item.itemId,
+          quantity: item.quantity,
+        })
+      }
+      return newList
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+      toast('List duplicated')
+    },
+    onError: (err: any) => toast(err.message || 'Failed to duplicate list', 'destructive'),
   })
 
   const handleSave = () => {
@@ -299,6 +337,15 @@ function ListsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => duplicateMutation.mutate(list)}
+                        disabled={duplicateMutation.isPending}
+                        title="Duplicate list"
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon-xs"

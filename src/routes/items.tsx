@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2, Package } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
@@ -27,6 +27,7 @@ import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
+import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/items')({
   component: ItemsPage,
@@ -56,24 +57,41 @@ function ItemsPage() {
   const [itemPrice, setItemPrice] = useState('')
   const [error, setError] = useState('')
 
-  const { data: itemsData, isLoading: itemsLoading } = useQuery({
+  const { data: itemsData, isLoading: itemsLoading, error: itemsError } = useQuery({
     queryKey: ['items'],
     queryFn: () => apiGet<{ items: Item[] }>('/api/items'),
     enabled: !!session?.user,
   })
   const items = itemsData?.items ?? []
 
-  const { data: categoriesData } = useQuery({
+  const { data: categoriesData, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiGet<{ categories: Category[] }>('/api/categories'),
     enabled: !!session?.user,
   })
   const categories = categoriesData?.categories ?? []
 
+  useEffect(() => {
+    if (itemsError) toast('Failed to load items', 'destructive')
+  }, [itemsError])
+
+  useEffect(() => {
+    if (categoriesError) toast('Failed to load categories', 'destructive')
+  }, [categoriesError])
+
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
     [categories],
   )
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, Item[]> = {}
+    for (const item of items) {
+      const catName = categoryMap[item.categoryId] || 'Uncategorized'
+      ;(groups[catName] ??= []).push(item)
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  }, [items, categoryMap])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -261,52 +279,61 @@ function ItemsPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((item, i) => (
-                <div
-                  key={item.id}
-                  className="rise-in tile rounded-lg p-5"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="icon-badge size-10 rounded-md">
-                        <Package className="size-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {categoryMap[item.categoryId] || 'Unknown'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => openEditDialog(item)}
+            <div className="space-y-8">
+              {groupedItems.map(([catName, catItems]) => (
+                <div key={catName}>
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                    {catName}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {catItems.map((item, i) => (
+                      <div
+                        key={item.id}
+                        className="rise-in tile rounded-lg p-5"
+                        style={{ animationDelay: `${i * 60}ms` }}
                       >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleDelete(item.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <p className="text-sm text-muted-foreground">
-                      Estimated price
-                    </p>
-                    <p className="tabular text-lg font-semibold text-foreground">
-                      {formatPrice(item.estimatedPrice)}
-                    </p>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="icon-badge size-10 rounded-md">
+                              <Package className="size-5" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">
+                                {item.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {catName}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => openEditDialog(item)}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => handleDelete(item.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <p className="text-sm text-muted-foreground">
+                            Estimated price
+                          </p>
+                          <p className="tabular text-lg font-semibold text-foreground">
+                            {formatPrice(item.estimatedPrice)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

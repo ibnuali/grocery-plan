@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ShoppingCart, DollarSign } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, DollarSign, Zap } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -27,6 +27,7 @@ import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
 import { apiGet, apiPost, apiDelete } from '#/lib/api'
+import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/lists/$listId')({
   component: ListDetailPage,
@@ -66,13 +67,13 @@ function ListDetailPage() {
   const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(null)
   const [error, setError] = useState('')
 
-  const { data: listInfo, isLoading: listLoading } = useQuery({
+  const { data: listInfo, isLoading: listLoading, error: listError } = useQuery({
     queryKey: ['list', listId],
     queryFn: () => apiGet<ListInfo>(`/api/lists/${listId}`),
     enabled: !!session?.user && !!listId,
   })
 
-  const { data: listItemsData, isLoading: itemsLoading } = useQuery({
+  const { data: listItemsData, isLoading: itemsLoading, error: listItemsError } = useQuery({
     queryKey: ['listItems', listId],
     queryFn: () => apiGet<{ items: ListItem[] }>(`/api/lists/items?listId=${listId}`),
     enabled: !!session?.user && !!listId,
@@ -85,6 +86,14 @@ function ListDetailPage() {
     enabled: !!session?.user,
   })
   const availableItems = availableItemsData?.items ?? []
+
+  useEffect(() => {
+    if (listError) toast('Failed to load list', 'destructive')
+  }, [listError])
+
+  useEffect(() => {
+    if (listItemsError) toast('Failed to load list items', 'destructive')
+  }, [listItemsError])
 
   const addItemMutation = useMutation({
     mutationFn: () =>
@@ -122,6 +131,19 @@ function ListDetailPage() {
       setError('')
     },
     onError: (err: any) => setError(err.message || 'Failed to record purchase'),
+  })
+
+  const quickRecordMutation = useMutation({
+    mutationFn: (listItem: ListItem) =>
+      apiPost('/api/purchases', {
+        shoppingListItemId: listItem.id,
+        actualPrice: listItem.estimatedPrice,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
+      toast('Purchase recorded')
+    },
+    onError: (err: any) => toast(err.message || 'Failed to record purchase', 'destructive'),
   })
 
   const handleAddItem = () => {
@@ -290,10 +312,18 @@ function ListDetailPage() {
               <p className="text-muted-foreground mb-4">
                 Add items from your catalog to start planning.
               </p>
-              <Button size="sm" onClick={() => setAddDialogOpen(true)}>
-                <Plus className="size-4" />
-                Add Item
-              </Button>
+              <div className="flex items-center justify-center gap-2">
+                <Button size="sm" onClick={() => setAddDialogOpen(true)}>
+                  <Plus className="size-4" />
+                  Add Item
+                </Button>
+                <Link
+                  to="/items"
+                  className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+                >
+                  Browse Catalog
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -321,6 +351,16 @@ function ListDetailPage() {
                     <p className="tabular font-semibold text-foreground mr-2 hidden sm:block">
                       {formatPrice(listItem.estimatedPrice * listItem.quantity)}
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => quickRecordMutation.mutate(listItem)}
+                      disabled={quickRecordMutation.isPending}
+                      title="Record at estimated price"
+                    >
+                      <Zap className="size-4" />
+                      Quick
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() => openPurchaseDialog(listItem)}
