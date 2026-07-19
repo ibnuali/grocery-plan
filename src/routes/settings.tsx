@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { MapPin } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button } from '#/components/ui/button'
 import { Label } from '#/components/ui/label'
@@ -116,95 +115,84 @@ function SettingsPage() {
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in mb-8">
-            <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
+            <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground">
               Settings
             </h1>
-            <p className="text-muted-foreground">
-              Manage your account preferences
-            </p>
           </div>
 
-          <div className="rise-in max-w-lg">
-            <div className="tile rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="icon-badge size-10 rounded-md">
-                  <MapPin className="size-5" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-foreground">Location</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Set your province and city for localized pricing
-                  </p>
-                </div>
+          <div className="rise-in max-w-lg section-accent space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-1">
+                Location
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Set your province and city for localized pricing.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="province">Province</Label>
+                <Select
+                  value={selectedProvince}
+                  onValueChange={handleProvinceChange}
+                >
+                  <SelectTrigger className="w-full" disabled={provincesLoading}>
+                    <SelectValue>
+                      {renderSelectLabel(
+                        provinces,
+                        provincesLoading ? 'Loading...' : 'Select province',
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provinces.map((prov) => (
+                      <SelectItem key={prov.id} value={prov.id}>
+                        {prov.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="province">Province</Label>
-                  <Select
-                    value={selectedProvince}
-                    onValueChange={handleProvinceChange}
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Select
+                  value={selectedCity}
+                  onValueChange={(v) => setSelectedCity(v ?? '')}
+                >
+                  <SelectTrigger
+                    className="w-full"
+                    disabled={!selectedProvince || citiesLoading}
                   >
-                    <SelectTrigger
-                      className="w-full bg-background"
-                      disabled={provincesLoading}
-                    >
-                      <SelectValue>
-                        {renderSelectLabel(
-                          provinces,
-                          provincesLoading ? 'Loading...' : 'Select province',
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {provinces.map((prov) => (
-                        <SelectItem key={prov.id} value={prov.id}>
-                          {prov.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <SelectValue>
+                      {renderSelectLabel(
+                        cities,
+                        !selectedProvince
+                          ? 'Select a province first'
+                          : citiesLoading
+                            ? 'Loading...'
+                            : 'Select city',
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Select
-                    value={selectedCity}
-                    onValueChange={(v) => setSelectedCity(v ?? '')}
-                  >
-                    <SelectTrigger
-                      className="w-full bg-background"
-                      disabled={!selectedProvince || citiesLoading}
-                    >
-                      <SelectValue>
-                        {renderSelectLabel(
-                          cities,
-                          !selectedProvince
-                            ? 'Select a province first'
-                            : citiesLoading
-                              ? 'Loading...'
-                              : 'Select city',
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending}
-                  >
-                    {saveMutation.isPending ? 'Saving...' : 'Save Location'}
-                  </Button>
-                </div>
+              <div className="pt-2">
+                <Button
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? 'Saving...' : 'Save Location'}
+                </Button>
               </div>
             </div>
           </div>

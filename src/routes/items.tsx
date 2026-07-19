@@ -1,7 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Package, Search, Globe, Check } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  Search,
+  Globe,
+  Check,
+} from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -78,7 +86,11 @@ function ItemsPage() {
   const [selectedGlobalCategoryId, setSelectedGlobalCategoryId] = useState('')
   const [selectedGlobalItemId, setSelectedGlobalItemId] = useState('')
 
-  const { data: itemsData, isLoading: itemsLoading, error: itemsError } = useQuery({
+  const {
+    data: itemsData,
+    isLoading: itemsLoading,
+    error: itemsError,
+  } = useQuery({
     queryKey: ['items'],
     queryFn: () => apiGet<{ items: Item[] }>('/api/items'),
     enabled: !!session?.user,
@@ -94,7 +106,8 @@ function ItemsPage() {
 
   const { data: globalCategoriesData } = useQuery({
     queryKey: ['catalogCategories'],
-    queryFn: () => apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
+    queryFn: () =>
+      apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
     enabled: !!session?.user && dialogOpen && addMode === 'catalog',
   })
   const globalCategories = globalCategoriesData?.categories ?? []
@@ -103,7 +116,8 @@ function ItemsPage() {
     queryKey: ['catalogItems', selectedGlobalCategoryId, catalogSearch],
     queryFn: () => {
       const params = new URLSearchParams()
-      if (selectedGlobalCategoryId) params.set('categoryId', selectedGlobalCategoryId)
+      if (selectedGlobalCategoryId)
+        params.set('categoryId', selectedGlobalCategoryId)
       if (catalogSearch.trim()) params.set('search', catalogSearch.trim())
       return apiGet<{ items: GlobalItem[] }>(`/api/catalog/items?${params}`)
     },
@@ -113,7 +127,10 @@ function ItemsPage() {
 
   const { data: userData } = useQuery({
     queryKey: ['userLocation'],
-    queryFn: () => apiGet<{ provinceId: string | null; cityId: string | null }>('/api/user/location'),
+    queryFn: () =>
+      apiGet<{ provinceId: string | null; cityId: string | null }>(
+        '/api/user/location',
+      ),
     enabled: !!session?.user && dialogOpen && addMode === 'catalog',
   })
 
@@ -153,15 +170,6 @@ function ItemsPage() {
         : items,
     [items, searchQuery],
   )
-
-  const groupedItems = useMemo(() => {
-    const groups: Record<string, Item[]> = {}
-    for (const item of filteredItems) {
-      const catName = categoryMap[item.categoryId] || 'Uncategorized'
-      ;(groups[catName] ??= []).push(item)
-    }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  }, [filteredItems, categoryMap])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -248,7 +256,7 @@ function ItemsPage() {
 
   // Auto-fill price when catalog price data arrives
   useEffect(() => {
-    if (addMode === 'catalog' && priceData?.price?.price && !editingItem) {
+    if (addMode === 'catalog' && priceData?.price.price && !editingItem) {
       setItemPrice((priceData.price.price / 100).toFixed(2))
     }
   }, [addMode, priceData, editingItem])
@@ -269,15 +277,10 @@ function ItemsPage() {
 
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
-          <div className="rise-in flex items-center justify-between mb-8">
-            <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
-                Items
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your grocery item catalog
-              </p>
-            </div>
+          <div className="rise-in flex items-center justify-between mb-6">
+            <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground">
+              Items
+            </h1>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger
                 className={cn(buttonVariants({ size: 'sm' }))}
@@ -350,7 +353,10 @@ function ItemsPage() {
                           }}
                           items={[
                             { value: '', label: 'All categories' },
-                            ...globalCategories.map((c) => ({ value: c.id, label: c.name })),
+                            ...globalCategories.map((c) => ({
+                              value: c.id,
+                              label: c.name,
+                            })),
                           ]}
                         >
                           <SelectTrigger className="w-full bg-background">
@@ -393,7 +399,9 @@ function ItemsPage() {
                             >
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <span className="font-medium text-foreground">{g.name}</span>
+                                  <span className="font-medium text-foreground">
+                                    {g.name}
+                                  </span>
                                   <span className="ml-2 text-xs text-muted-foreground">
                                     {g.categoryName} · {g.unit}
                                   </span>
@@ -412,9 +420,10 @@ function ItemsPage() {
                             {selectedGlobalItem.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {selectedGlobalItem.categoryName} · {selectedGlobalItem.unit}
+                            {selectedGlobalItem.categoryName} ·{' '}
+                            {selectedGlobalItem.unit}
                           </p>
-                          {userData?.cityId && priceData?.price?.price ? (
+                          {userData?.cityId && priceData?.price.price ? (
                             <p className="text-sm text-foreground">
                               Suggested price:{' '}
                               <span className="tabular font-semibold">
@@ -451,7 +460,10 @@ function ItemsPage() {
                     <Select
                       value={itemCategoryId}
                       onValueChange={(v) => setItemCategoryId(v ?? '')}
-                      items={categories.map((c) => ({ value: c.id, label: c.name }))}
+                      items={categories.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
                     >
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select a category" />
@@ -501,14 +513,19 @@ function ItemsPage() {
           </div>
 
           {items.length > 0 && (
-            <div className="relative mb-6">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search items by name…"
-                className="pl-9 bg-background"
-              />
+            <div className="toolbar">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search items…"
+                  className="pl-9"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground tabular">
+                {items.length} {items.length === 1 ? 'item' : 'items'}
+              </p>
             </div>
           )}
 
@@ -527,80 +544,67 @@ function ItemsPage() {
               </Button>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="rise-in text-center py-16 surface rounded-lg">
-              <Search className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No matches
-              </h3>
+            <div className="rise-in text-center py-12 surface rounded-lg">
               <p className="text-muted-foreground">
                 No items match "{searchQuery}".
               </p>
             </div>
           ) : (
-            <div className="space-y-8">
-              {groupedItems.map(([catName, catItems]) => (
-                <div key={catName}>
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    {catName}
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {catItems.map((item, i) => (
-                      <div
-                        key={item.id}
-                        className="rise-in tile rounded-lg p-5"
-                        style={{ animationDelay: `${i * 60}ms` }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="icon-badge size-10 rounded-md">
-                              <Package className="size-5" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">
-                                {item.name}
-                              </h3>
-                              <p className="text-xs text-muted-foreground">
-                                {catName}
-                                {item.globalItemId && (
-                                  <span className="ml-2 inline-flex items-center gap-0.5 text-primary">
-                                    <Globe className="size-3" />
-                                    Catalog
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() => openEditDialog(item)}
-                            >
-                              <Pencil className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() => handleDelete(item.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
+            <div className="rise-in data-table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th className="text-right">Est. Price</th>
+                    <th className="w-20"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <span className="font-medium text-foreground">
+                          {item.name}
+                        </span>
+                        {item.globalItemId && (
+                          <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] text-primary">
+                            <Globe className="size-3" />
+                            Catalog
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="text-muted-foreground">
+                          {categoryMap[item.categoryId] || '—'}
+                        </span>
+                      </td>
+                      <td className="text-right tabular font-medium text-foreground">
+                        {formatPrice(item.estimatedPrice)}
+                      </td>
+                      <td>
+                        <div className="row-actions flex items-center gap-0.5 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => openEditDialog(item)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleDelete(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-border">
-                          <p className="text-sm text-muted-foreground">
-                            Estimated price
-                          </p>
-                          <p className="tabular text-lg font-semibold text-foreground">
-                            {formatPrice(item.estimatedPrice)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

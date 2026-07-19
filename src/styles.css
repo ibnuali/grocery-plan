@@ -144,7 +144,11 @@ body {
 /* Non-button links carry the accent, quietly */
 a:not([data-slot='button']):not([data-slot='button'] *) {
   color: var(--color-accent-strong);
-  text-decoration-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--color-accent) 45%,
+    transparent
+  );
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
   transition: color var(--dur-short) var(--ease-out);
@@ -225,7 +229,87 @@ pre code {
   justify-content: center;
   color: var(--color-accent);
   background: color-mix(in oklab, var(--color-accent) 12%, var(--color-paper));
-  border: 1px solid color-mix(in oklab, var(--color-accent) 24%, var(--color-rule));
+  border: 1px solid
+    color-mix(in oklab, var(--color-accent) 24%, var(--color-rule));
+}
+
+/* Category list item — compact horizontal row */
+.cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.cat-item:hover {
+  border-color: color-mix(in oklab, var(--color-accent) 50%, var(--color-rule));
+}
+
+/* Toolbar — section header row with search */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* Data table — stripped rows for dense data */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.data-table thead {
+  position: sticky;
+  top: 4rem;
+  z-index: 10;
+  background: var(--color-paper);
+}
+
+.data-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-2);
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 2px solid var(--color-rule);
+}
+
+.data-table td {
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-rule);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--color-paper-2);
+}
+
+.data-table tbody tr:hover {
+  background: color-mix(in oklab, var(--color-accent) 6%, var(--color-paper));
+}
+
+.data-table tbody tr:hover .row-actions {
+  opacity: 1;
+}
+
+.row-actions {
+  opacity: 0;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+
+.section-accent {
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--color-accent);
 }
 
 .tabular {
@@ -295,6 +379,17 @@ pre code {
 .site-footer {
   border-top: 1px solid var(--color-rule);
   background: var(--color-paper-2);
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .data-table-wrapper {
+    margin-inline: calc(-1 * var(--space-sm));
+    overflow-x: auto;
+  }
 }
 
 @layer base {

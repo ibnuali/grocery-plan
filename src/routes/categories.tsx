@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Tag, Globe } from 'lucide-react'
+import { Plus, Pencil, Trash2, Globe } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -50,10 +50,15 @@ function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryName, setCategoryName] = useState('')
-  const [selectedGlobalCategoryId, setSelectedGlobalCategoryId] = useState<string>('')
+  const [selectedGlobalCategoryId, setSelectedGlobalCategoryId] =
+    useState<string>('')
   const [error, setError] = useState('')
 
-  const { data, isLoading, error: categoriesError } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: categoriesError,
+  } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiGet<{ categories: Category[] }>('/api/categories'),
     enabled: !!session?.user,
@@ -62,7 +67,8 @@ function CategoriesPage() {
 
   const { data: globalData } = useQuery({
     queryKey: ['global-categories'],
-    queryFn: () => apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
+    queryFn: () =>
+      apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
     enabled: !!session?.user,
   })
   const globalCategories = globalData?.categories ?? []
@@ -74,7 +80,9 @@ function CategoriesPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editingCategory) {
-        return apiPut(`/api/categories/${editingCategory.id}`, { name: categoryName.trim() })
+        return apiPut(`/api/categories/${editingCategory.id}`, {
+          name: categoryName.trim(),
+        })
       }
       return apiPost('/api/categories', {
         name: categoryName.trim(),
@@ -94,7 +102,8 @@ function CategoriesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiDelete(`/api/categories/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['categories'] }),
   })
 
   const handleSave = () => {
@@ -125,9 +134,13 @@ function CategoriesPage() {
   }
 
   // Find the global category name for a user category
-  const getGlobalCategoryName = (globalCategoryId: string | null | undefined) => {
+  const getGlobalCategoryName = (
+    globalCategoryId: string | null | undefined,
+  ) => {
     if (!globalCategoryId) return null
-    return globalCategories.find((gc) => gc.id === globalCategoryId)?.name ?? null
+    return (
+      globalCategories.find((gc) => gc.id === globalCategoryId)?.name ?? null
+    )
   }
 
   if (isPending || isLoading) return <LoadingSpinner />
@@ -149,14 +162,9 @@ function CategoriesPage() {
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
-            <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
-                Categories
-              </h1>
-              <p className="text-muted-foreground">
-                Organize your items into categories
-              </p>
-            </div>
+            <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground">
+              Categories
+            </h1>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger
                 className={cn(buttonVariants({ size: 'sm' }))}
@@ -194,12 +202,19 @@ function CategoriesPage() {
                   </div>
                   {!editingCategory && globalCategories.length > 0 && (
                     <div className="space-y-2">
-                      <Label htmlFor="global-category">Link to Global Category</Label>
+                      <Label htmlFor="global-category">
+                        Link to Global Category
+                      </Label>
                       <Select
                         value={selectedGlobalCategoryId}
-                        onValueChange={setSelectedGlobalCategoryId}
+                        onValueChange={(v) =>
+                          setSelectedGlobalCategoryId(v ?? '')
+                        }
                       >
-                        <SelectTrigger id="global-category" className="w-full bg-background">
+                        <SelectTrigger
+                          id="global-category"
+                          className="w-full bg-background"
+                        >
                           <SelectValue placeholder="None (optional)" />
                         </SelectTrigger>
                         <SelectContent>
@@ -211,7 +226,8 @@ function CategoriesPage() {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Linking to a global category helps with smart suggestions.
+                        Linking to a global category helps with smart
+                        suggestions.
                       </p>
                     </div>
                   )}
@@ -234,63 +250,44 @@ function CategoriesPage() {
             </Dialog>
           </div>
 
-          {/* Global Categories Section */}
+          {/* Global Categories */}
           {globalCategories.length > 0 && (
-            <section className="rise-in mb-10">
-              <div className="flex items-center gap-2 mb-4">
-                <Globe className="size-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Global Categories
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <section className="rise-in mb-8">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Global
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {globalCategories.map((gc, i) => (
                   <div
                     key={gc.id}
-                    className="rise-in tile rounded-lg p-5 opacity-80"
-                    style={{ animationDelay: `${i * 60}ms` }}
+                    className="rise-in cat-item"
+                    style={{ animationDelay: `${i * 40}ms` }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="icon-badge size-10 rounded-md">
-                        <Globe className="size-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground">
-                            {gc.name}
-                          </h3>
-                          <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            Global
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Read-only
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Globe className="size-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {gc.name}
+                      </span>
                     </div>
+                    <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0">
+                      Global
+                    </span>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* User Categories Section */}
+          {/* User Categories */}
           <section>
-            <div className="flex items-center gap-2 mb-4">
-              <Tag className="size-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Your Categories
-              </h2>
-            </div>
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Yours
+            </h2>
 
             {categories.length === 0 ? (
-              <div className="rise-in text-center py-16 surface rounded-lg">
-                <Tag className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No categories yet
-                </h3>
+              <div className="rise-in text-center py-12 surface rounded-lg">
                 <p className="text-muted-foreground mb-4">
-                  Create your first category to start organizing items.
+                  No categories yet. Create one to organize your items.
                 </p>
                 <Button size="sm" onClick={openCreateDialog}>
                   <Plus className="size-4" />
@@ -298,52 +295,42 @@ function CategoriesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {categories.map((cat, i) => {
                   const globalName = getGlobalCategoryName(cat.globalCategoryId)
                   return (
                     <div
                       key={cat.id}
-                      className="rise-in tile rounded-lg p-5"
-                      style={{ animationDelay: `${i * 60}ms` }}
+                      className="rise-in cat-item"
+                      style={{ animationDelay: `${i * 40}ms` }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="icon-badge size-10 rounded-md">
-                            <Tag className="size-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground">
-                              {cat.name}
-                            </h3>
-                            {globalName && (
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Globe className="size-3" />
-                                Linked to {globalName}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              Created {new Date(cat.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => openEditDialog(cat)}
-                          >
-                            <Pencil className="size-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => handleDelete(cat.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-foreground text-sm truncate">
+                          {cat.name}
+                        </span>
+                        {globalName && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0">
+                            <Globe className="size-3" />
+                            {globalName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => openEditDialog(cat)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleDelete(cat.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
                   )

@@ -5,12 +5,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ShoppingCart,
   DollarSign,
   Zap,
-  TrendingDown,
-  TrendingUp,
-  Minus,
   CornerDownLeft,
 } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
@@ -68,8 +64,7 @@ interface ListInfo {
   id: string
   name: string
   period: string
-  startDate: string
-  endDate: string
+  date: string
 }
 
 interface Purchase {
@@ -332,19 +327,14 @@ function ListDetailPage() {
           <div className="rise-in mb-8">
             <Link
               to="/lists"
-              className="text-sm text-muted-foreground hover:text-foreground mb-2 inline-block no-underline"
+              className="text-sm text-muted-foreground hover:text-foreground mb-3 inline-block no-underline"
             >
               ← Back to Lists
             </Link>
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
-                  {listInfo.name}
-                </h1>
-                <p className="text-muted-foreground capitalize">
-                  {listInfo.period} list
-                </p>
-              </div>
+              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground">
+                {listInfo.name}
+              </h1>
               <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                 <DialogTrigger className={cn(buttonVariants({ size: 'sm' }))}>
                   <Plus className="size-4" />
@@ -503,12 +493,8 @@ function ListDetailPage() {
           {/* List Items */}
           {listItems.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
-              <ShoppingCart className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No items in this list
-              </h3>
               <p className="text-muted-foreground mb-4">
-                Add items from your catalog to start planning.
+                No items yet. Add items from your catalog to start planning.
               </p>
               <div className="flex items-center justify-center gap-2">
                 <Button size="sm" onClick={() => setAddDialogOpen(true)}>
@@ -526,170 +512,180 @@ function ListDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {listItems.map((listItem, i) => (
-                <div
-                  key={listItem.id}
-                  className={cn(
-                    'rise-in tile rounded-lg p-4 flex items-center justify-between gap-3 transition-opacity',
-                    listItem.purchased && 'opacity-50',
-                  )}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <Switch
-                      size="default"
-                      checked={listItem.purchased}
-                      onCheckedChange={() =>
-                        togglePurchasedMutation.mutate(listItem)
-                      }
-                      disabled={togglePurchasedMutation.isPending}
-                      aria-label={`Mark ${listItem.itemName} as purchased`}
-                    />
-                    <div className="min-w-0">
-                      <h3
+            <div className="rise-in data-table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th className="w-10"></th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th className="text-right">Line Total</th>
+                    <th className="w-40"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listItems.map((listItem) => (
+                    <tr
+                      key={listItem.id}
+                      className={cn(listItem.purchased && 'opacity-50')}
+                    >
+                      <td>
+                        <Switch
+                          size="default"
+                          checked={listItem.purchased}
+                          onCheckedChange={() =>
+                            togglePurchasedMutation.mutate(listItem)
+                          }
+                          disabled={togglePurchasedMutation.isPending}
+                          aria-label={`Mark ${listItem.itemName} as purchased`}
+                        />
+                      </td>
+                      <td>
+                        <span
+                          className={cn(
+                            'font-medium text-foreground',
+                            listItem.purchased &&
+                              'line-through text-muted-foreground',
+                          )}
+                        >
+                          {listItem.itemName}
+                        </span>
+                        {listItem.notes && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {listItem.notes}
+                          </span>
+                        )}
+                      </td>
+                      <td className="tabular text-muted-foreground">
+                        {listItem.quantity}
+                        {listItem.unit ? ` ${listItem.unit}` : ''}
+                        {listItem.estimatedPrice > 0 && (
+                          <span className="ml-1 text-xs">
+                            × {formatPrice(listItem.estimatedPrice)}
+                          </span>
+                        )}
+                      </td>
+                      <td
                         className={cn(
-                          'font-semibold text-foreground truncate',
+                          'text-right tabular font-medium text-foreground',
                           listItem.purchased &&
                             'line-through text-muted-foreground',
                         )}
                       >
-                        {listItem.itemName}
-                      </h3>
-                      <p className="tabular text-sm text-muted-foreground">
-                        Qty {listItem.quantity}
-                        {listItem.unit ? ` ${listItem.unit}` : ''}
-                        {listItem.estimatedPrice > 0 && (
-                          <> × {formatPrice(listItem.estimatedPrice)}</>
+                        {formatPrice(
+                          listItem.estimatedPrice * listItem.quantity,
                         )}
-                      </p>
-                      {listItem.notes && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {listItem.notes}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <p
-                      className={cn(
-                        'tabular font-semibold text-foreground mr-2 hidden sm:block',
-                        listItem.purchased &&
-                          'line-through text-muted-foreground',
-                      )}
-                    >
-                      {formatPrice(listItem.estimatedPrice * listItem.quantity)}
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => quickRecordMutation.mutate(listItem)}
-                      disabled={quickRecordMutation.isPending}
-                      title="Record at estimated price"
-                    >
-                      <Zap className="size-4" />
-                      Quick
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => openPurchaseDialog(listItem)}
-                    >
-                      <DollarSign className="size-4" />
-                      Record
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => openEditDialog(listItem)}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => handleRemoveItem(listItem.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td>
+                        <div className="row-actions flex items-center gap-0.5 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => quickRecordMutation.mutate(listItem)}
+                            disabled={quickRecordMutation.isPending}
+                            title="Record at estimated price"
+                          >
+                            <Zap className="size-3.5" />
+                            Quick
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openPurchaseDialog(listItem)}
+                          >
+                            <DollarSign className="size-3.5" />
+                            Record
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => openEditDialog(listItem)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleRemoveItem(listItem.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* Price Comparison */}
+          {/* Purchase History */}
           {purchases.length > 0 && (
             <div className="rise-in mt-8">
               <h2 className="display-title text-lg font-semibold text-foreground mb-4">
                 Purchase History
               </h2>
-              <div className="space-y-3">
-                {purchases.map((p, i) => {
-                  const diff = p.actualPrice - p.estimatedPrice
-                  const diffAbs = Math.abs(diff)
-                  const isExact = diff === 0
-                  const isCheaper = diff < 0
+              <div className="rise-in data-table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th className="text-right">Actual</th>
+                      <th className="text-right">Estimated</th>
+                      <th className="text-right">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {purchases.map((p) => {
+                      const diff = p.actualPrice - p.estimatedPrice
+                      const diffAbs = Math.abs(diff)
+                      const isExact = diff === 0
+                      const isCheaper = diff < 0
 
-                  return (
-                    <div
-                      key={p.id}
-                      className="rise-in tile rounded-lg p-4 flex items-center justify-between gap-3"
-                      style={{ animationDelay: `${i * 40}ms` }}
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="icon-badge size-10 rounded-md shrink-0">
-                          {isExact ? (
-                            <Minus className="size-5" />
-                          ) : isCheaper ? (
-                            <TrendingDown className="size-5" />
-                          ) : (
-                            <TrendingUp className="size-5" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground truncate">
-                            {p.itemName}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Qty {p.quantity} &middot;{' '}
-                            {new Date(p.purchasedAt).toLocaleDateString(
-                              'id-ID',
-                              {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              },
+                      return (
+                        <tr key={p.id}>
+                          <td>
+                            <span className="font-medium text-foreground">
+                              {p.itemName}
+                            </span>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              Qty {p.quantity} ·{' '}
+                              {new Date(p.purchasedAt).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                },
+                              )}
+                            </span>
+                          </td>
+                          <td className="text-right tabular font-medium text-foreground">
+                            {formatPrice(p.actualPrice)}
+                          </td>
+                          <td className="text-right tabular text-muted-foreground">
+                            {formatPrice(p.estimatedPrice)}
+                          </td>
+                          <td
+                            className={cn(
+                              'text-right tabular text-sm font-medium',
+                              isExact
+                                ? 'text-muted-foreground'
+                                : isCheaper
+                                  ? 'text-green-600'
+                                  : 'text-destructive',
                             )}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="tabular font-semibold text-foreground">
-                          {formatPrice(p.actualPrice)}
-                        </p>
-                        <p className="tabular text-xs text-muted-foreground">
-                          Est. {formatPrice(p.estimatedPrice)}
-                        </p>
-                        <p
-                          className={`tabular text-xs font-medium ${
-                            isExact
-                              ? 'text-muted-foreground'
+                          >
+                            {isExact
+                              ? 'On budget'
                               : isCheaper
-                                ? 'text-green-600'
-                                : 'text-destructive'
-                          }`}
-                        >
-                          {isExact
-                            ? 'On budget'
-                            : isCheaper
-                              ? `${formatPrice(diffAbs)} under`
-                              : `${formatPrice(diffAbs)} over`}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
+                                ? `−${formatPrice(diffAbs)}`
+                                : `+${formatPrice(diffAbs)}`}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

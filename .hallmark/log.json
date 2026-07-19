@@ -2,6 +2,17 @@
   {
     "date": "2026-07-17",
     "scope": "app",
+    "macrostructure": "Workbench (per-page variation)",
+    "theme": "Grocery (custom · paper-light · produce-green accent)",
+    "theme_axes": "light / classical-serif (Fraunces) / chromatic-green",
+    "enrichment": "none",
+    "genre": "modern-minimal",
+    "design_system": "design.md",
+    "brief": "Redesign categories/items/lists/settings — break identical template rhythm: categories→compact list, items→data table, lists→horizontal cards, settings→flat form"
+  },
+  {
+    "date": "2026-07-17",
+    "scope": "app",
     "macrostructure": "Workbench + Marquee Hero",
     "theme": "Grocery (custom · paper-light · produce-green accent)",
     "theme_axes": "light / classical-serif (Fraunces) / chromatic-green",

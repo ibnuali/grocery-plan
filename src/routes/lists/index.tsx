@@ -7,7 +7,7 @@ import {
   Trash2,
   ClipboardList,
   CalendarDays,
-  ShoppingCart,
+  Copy,
 } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
@@ -35,7 +35,6 @@ import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 import { toast } from '#/lib/toast'
-import { Copy } from 'lucide-react'
 
 export const Route = createFileRoute('/lists/')({
   component: ListsPage,
@@ -45,8 +44,7 @@ interface ShoppingList {
   id: string
   name: string
   period: string
-  startDate: string
-  endDate: string
+  date: string
   createdAt: string
   itemCount: number
   totalEstimate: number
@@ -59,11 +57,14 @@ function ListsPage() {
   const [editingList, setEditingList] = useState<ShoppingList | null>(null)
   const [listName, setListName] = useState('')
   const [listPeriod, setListPeriod] = useState('weekly')
-  const [listStartDate, setListStartDate] = useState('')
-  const [listEndDate, setListEndDate] = useState('')
+  const [listDate, setListDate] = useState('')
   const [error, setError] = useState('')
 
-  const { data, isLoading, error: listsError } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: listsError,
+  } = useQuery({
     queryKey: ['lists'],
     queryFn: () => apiGet<{ lists: ShoppingList[] }>('/api/lists'),
     enabled: !!session?.user,
@@ -79,8 +80,7 @@ function ListsPage() {
       const payload = {
         name: listName.trim(),
         period: listPeriod,
-        startDate: new Date(listStartDate).toISOString(),
-        endDate: new Date(listEndDate).toISOString(),
+        date: new Date(listDate).toISOString(),
       }
       if (editingList) {
         return apiPut(`/api/lists/${editingList.id}`, payload)
@@ -93,8 +93,7 @@ function ListsPage() {
       setEditingList(null)
       setListName('')
       setListPeriod('weekly')
-      setListStartDate('')
-      setListEndDate('')
+      setListDate('')
       setError('')
     },
     onError: (err: any) => setError(err.message || 'Failed to save list'),
@@ -107,20 +106,14 @@ function ListsPage() {
 
   const duplicateMutation = useMutation({
     mutationFn: async (list: ShoppingList) => {
-      // Create new list with fresh dates
-      const today = new Date()
-      const endDate = new Date(today)
-      endDate.setDate(endDate.getDate() + (list.period === 'monthly' ? 30 : 7))
       const newList = await apiPost<ShoppingList>('/api/lists', {
         name: `${list.name} (Copy)`,
         period: list.period,
-        startDate: today.toISOString(),
-        endDate: endDate.toISOString(),
+        date: new Date().toISOString(),
       })
-      // Copy items from the original list
-      const { items } = await apiGet<{ items: Array<{ itemId: string; quantity: number }> }>(
-        `/api/lists/items?listId=${list.id}`,
-      )
+      const { items } = await apiGet<{
+        items: Array<{ itemId: string; quantity: number }>
+      }>(`/api/lists/items?listId=${list.id}`)
       for (const item of items) {
         await apiPost('/api/lists/items', {
           shoppingListId: newList.id,
@@ -134,11 +127,12 @@ function ListsPage() {
       queryClient.invalidateQueries({ queryKey: ['lists'] })
       toast('List duplicated')
     },
-    onError: (err: any) => toast(err.message || 'Failed to duplicate list', 'destructive'),
+    onError: (err: any) =>
+      toast(err.message || 'Failed to duplicate list', 'destructive'),
   })
 
   const handleSave = () => {
-    if (!listName.trim() || !listStartDate || !listEndDate) return
+    if (!listName.trim() || !listDate) return
     setError('')
     saveMutation.mutate()
   }
@@ -152,8 +146,7 @@ function ListsPage() {
     setEditingList(list)
     setListName(list.name)
     setListPeriod(list.period)
-    setListStartDate(list.startDate.split('T')[0])
-    setListEndDate(list.endDate.split('T')[0])
+    setListDate(list.date.split('T')[0])
     setError('')
     setDialogOpen(true)
   }
@@ -162,8 +155,7 @@ function ListsPage() {
     setEditingList(null)
     setListName('')
     setListPeriod('weekly')
-    setListStartDate('')
-    setListEndDate('')
+    setListDate(new Date().toISOString().split('T')[0])
     setError('')
     setDialogOpen(true)
   }
@@ -195,14 +187,9 @@ function ListsPage() {
       <main className="flex-1">
         <div className="page-wrap px-4 sm:px-6 py-8 sm:py-12">
           <div className="rise-in flex items-center justify-between mb-8">
-            <div>
-              <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
-                Shopping Lists
-              </h1>
-              <p className="text-muted-foreground">
-                Plan your weekly and monthly grocery trips
-              </p>
-            </div>
+            <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground">
+              Shopping Lists
+            </h1>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger
                 className={cn(buttonVariants({ size: 'sm' }))}
@@ -235,7 +222,6 @@ function ListsPage() {
                       value={listName}
                       onChange={(e) => setListName(e.target.value)}
                       placeholder="e.g., Weekly Groceries, Monthly Stock"
-                      className="bg-background"
                     />
                   </div>
                   <div className="space-y-2">
@@ -244,7 +230,7 @@ function ListsPage() {
                       value={listPeriod}
                       onValueChange={(v) => setListPeriod(v ?? 'weekly')}
                     >
-                      <SelectTrigger className="w-full bg-background">
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -253,27 +239,14 @@ function ListsPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="list-start">Start Date</Label>
-                      <Input
-                        id="list-start"
-                        type="date"
-                        value={listStartDate}
-                        onChange={(e) => setListStartDate(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="list-end">End Date</Label>
-                      <Input
-                        id="list-end"
-                        type="date"
-                        value={listEndDate}
-                        onChange={(e) => setListEndDate(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="list-date">Date</Label>
+                    <Input
+                      id="list-date"
+                      type="date"
+                      value={listDate}
+                      onChange={(e) => setListDate(e.target.value)}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
@@ -286,10 +259,7 @@ function ListsPage() {
                   <Button
                     onClick={handleSave}
                     disabled={
-                      saveMutation.isPending ||
-                      !listName.trim() ||
-                      !listStartDate ||
-                      !listEndDate
+                      saveMutation.isPending || !listName.trim() || !listDate
                     }
                   >
                     {saveMutation.isPending ? 'Saving...' : 'Save'}
@@ -314,32 +284,27 @@ function ListsPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {lists.map((list, i) => (
                 <div
                   key={list.id}
-                  className="rise-in tile rounded-lg p-5"
+                  className="rise-in tile rounded-lg p-5 flex flex-col"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="icon-badge size-10 rounded-md">
-                        <ShoppingCart className="size-5" />
-                      </div>
-                      <div>
-                        <Link
-                          to="/lists/$listId"
-                          params={{ listId: list.id }}
-                          className="font-semibold text-foreground no-underline hover:text-primary"
-                        >
-                          {list.name}
-                        </Link>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {list.period}
-                        </p>
-                      </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        to="/lists/$listId"
+                        params={{ listId: list.id }}
+                        className="font-semibold text-foreground no-underline hover:text-primary text-base"
+                      >
+                        {list.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                        {list.period}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon-xs"
@@ -366,19 +331,17 @@ function ListsPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarDays className="size-4" />
-                      <span className="tabular">
-                        {formatDate(list.startDate)} –{' '}
-                        {formatDate(list.endDate)}
-                      </span>
+                  <div className="mt-auto pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <CalendarDays className="size-4 shrink-0" />
+                      <span className="tabular">{formatDate(list.date)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {list.itemCount} {list.itemCount === 1 ? 'item' : 'items'}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        {list.itemCount}{' '}
+                        {list.itemCount === 1 ? 'item' : 'items'}
                       </span>
-                      <span className="font-medium tabular">
+                      <span className="tabular text-lg font-semibold text-foreground">
                         {formatPrice(list.totalEstimate)}
                       </span>
                     </div>

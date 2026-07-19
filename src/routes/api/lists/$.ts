@@ -17,7 +17,12 @@ export const Route = createFileRoute('/api/lists/$')({
         const [list] = await db
           .select()
           .from(shoppingList)
-          .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, session.user.id)))
+          .where(
+            and(
+              eq(shoppingList.id, id),
+              eq(shoppingList.userId, session.user.id),
+            ),
+          )
 
         if (!list) {
           return json({ error: 'List not found' }, { status: 404 })
@@ -35,11 +40,15 @@ export const Route = createFileRoute('/api/lists/$')({
           .set({
             name: body.name,
             period: body.period,
-            startDate: new Date(body.startDate),
-            endDate: new Date(body.endDate),
+            date: new Date(body.date),
             updatedAt: new Date(),
           })
-          .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, session.user.id)))
+          .where(
+            and(
+              eq(shoppingList.id, id),
+              eq(shoppingList.userId, session.user.id),
+            ),
+          )
           .returning()
 
         if (!updated) {
@@ -55,7 +64,12 @@ export const Route = createFileRoute('/api/lists/$')({
 
         const [deleted] = await db
           .delete(shoppingList)
-          .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, session.user.id)))
+          .where(
+            and(
+              eq(shoppingList.id, id),
+              eq(shoppingList.userId, session.user.id),
+            ),
+          )
           .returning()
 
         if (!deleted) {

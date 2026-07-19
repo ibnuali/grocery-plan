@@ -1,10 +1,15 @@
 import { z } from 'zod'
 import { json } from '@tanstack/react-start'
 
-export function validateBody<T extends z.ZodType>(schema: T, body: unknown): z.infer<T> {
+export function validateBody<T extends z.ZodType>(
+  schema: T,
+  body: unknown,
+): z.infer<T> {
   const result = schema.safeParse(body)
   if (!result.success) {
-    const message = result.error.issues.map((e: { message: string }) => e.message).join(', ')
+    const message = result.error.issues
+      .map((e: { message: string }) => e.message)
+      .join(', ')
     throw json({ error: message }, { status: 400 })
   }
   return result.data
@@ -38,21 +43,13 @@ export const updateItemSchema = z.object({
 export const createListSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   period: z.enum(['weekly', 'monthly']),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-}).refine(d => new Date(d.endDate) > new Date(d.startDate), {
-  message: 'End date must be after start date',
-  path: ['endDate'],
+  date: z.string().datetime(),
 })
 
 export const updateListSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   period: z.enum(['weekly', 'monthly']),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-}).refine(d => new Date(d.endDate) > new Date(d.startDate), {
-  message: 'End date must be after start date',
-  path: ['endDate'],
+  date: z.string().datetime(),
 })
 
 export const addListItemSchema = z.object({
