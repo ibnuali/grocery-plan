@@ -70,9 +70,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListsListIdRoute = ListsListIdRouteImport.update({
-  id: '/$listId',
-  path: '/$listId',
-  getParentRoute: () => ListsRoute,
+  id: '/lists/$listId',
+  path: '/lists/$listId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPurchasesIndexRoute = ApiPurchasesIndexRouteImport.update({
   id: '/api/purchases/',
@@ -320,6 +320,7 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   ItemsRoute: typeof ItemsRoute
   ListsRoute: typeof ListsRouteWithChildren
+  ListsListIdRoute: typeof ListsListIdRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
@@ -394,10 +395,10 @@ declare module '@tanstack/react-router' {
     }
     '/lists/$listId': {
       id: '/lists/$listId'
-      path: '/$listId'
+      path: '/lists/$listId'
       fullPath: '/lists/$listId'
       preLoaderRoute: typeof ListsListIdRouteImport
-      parentRoute: typeof ListsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/purchases/': {
       id: '/api/purchases/'
@@ -514,21 +515,14 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ListsRouteChildren {
-  ListsListIdRoute: typeof ListsListIdRoute
-}
-
-const ListsRouteChildren: ListsRouteChildren = {
-  ListsListIdRoute: ListsListIdRoute,
-}
-
-const ListsRouteWithChildren = ListsRoute._addFileChildren(ListsRouteChildren)
+const ListsRouteWithChildren = ListsRoute
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriesRoute: CategoriesRoute,
   ItemsRoute: ItemsRoute,
   ListsRoute: ListsRouteWithChildren,
+  ListsListIdRoute: ListsListIdRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
