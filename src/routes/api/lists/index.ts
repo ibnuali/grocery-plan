@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { db } from '#/db'
-import { shoppingList } from '#/db/schema'
-import { eq } from 'drizzle-orm'
+import { shoppingList, shoppingListItem, item } from '#/db/schema'
+import { eq, sql } from 'drizzle-orm'
 import { requireAuth } from '#/lib/auth'
 import { validateBody, createListSchema } from '#/lib/validations'
 
@@ -20,9 +20,17 @@ export const Route = createFileRoute('/api/lists/')({
             startDate: shoppingList.startDate,
             endDate: shoppingList.endDate,
             createdAt: shoppingList.createdAt,
+            itemCount: sql<number>`count(${shoppingListItem.id})::int`,
+            totalEstimate: sql<number>`coalesce(sum(${shoppingListItem.quantity} * ${item.estimatedPrice}), 0)::int`,
           })
           .from(shoppingList)
+          .leftJoin(
+            shoppingListItem,
+            eq(shoppingListItem.shoppingListId, shoppingList.id),
+          )
+          .leftJoin(item, eq(item.id, shoppingListItem.itemId))
           .where(eq(shoppingList.userId, session.user.id))
+          .groupBy(shoppingList.id)
 
         return json({ lists })
       },

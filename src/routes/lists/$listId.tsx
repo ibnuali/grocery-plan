@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ShoppingCart, DollarSign, Zap } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -55,6 +55,17 @@ interface ListInfo {
   endDate: string
 }
 
+interface Purchase {
+  id: string
+  actualPrice: number
+  purchasedAt: string
+  quantity: number
+  itemName: string
+  estimatedPrice: number
+  listName: string
+  shoppingListItemId: string
+}
+
 function ListDetailPage() {
   const { listId } = Route.useParams()
   const { data: session, isPending } = authClient.useSession()
@@ -95,6 +106,13 @@ function ListDetailPage() {
     if (listItemsError) toast('Failed to load list items', 'destructive')
   }, [listItemsError])
 
+  const { data: purchasesData } = useQuery({
+    queryKey: ['purchases', listId],
+    queryFn: () => apiGet<{ purchases: Purchase[] }>(`/api/purchases?listId=${listId}`),
+    enabled: !!session?.user && !!listId,
+  })
+  const purchases = purchasesData?.purchases ?? []
+
   const addItemMutation = useMutation({
     mutationFn: () =>
       apiPost('/api/lists/items', {
@@ -125,6 +143,7 @@ function ListDetailPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
+      queryClient.invalidateQueries({ queryKey: ['purchases', listId] })
       setPurchaseDialogOpen(false)
       setSelectedListItem(null)
       setActualPrice('')
@@ -379,6 +398,79 @@ function ListDetailPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Price Comparison */}
+          {purchases.length > 0 && (
+            <div className="rise-in mt-8">
+              <h2 className="display-title text-lg font-semibold text-foreground mb-4">
+                Purchase History
+              </h2>
+              <div className="space-y-3">
+                {purchases.map((p, i) => {
+                  const diff = p.actualPrice - p.estimatedPrice
+                  const diffAbs = Math.abs(diff)
+                  const isExact = diff === 0
+                  const isCheaper = diff < 0
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="rise-in tile rounded-lg p-4 flex items-center justify-between gap-3"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="icon-badge size-10 rounded-md shrink-0">
+                          {isExact ? (
+                            <Minus className="size-5" />
+                          ) : isCheaper ? (
+                            <TrendingDown className="size-5" />
+                          ) : (
+                            <TrendingUp className="size-5" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {p.itemName}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Qty {p.quantity} &middot;{' '}
+                            {new Date(p.purchasedAt).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="tabular font-semibold text-foreground">
+                          {formatPrice(p.actualPrice)}
+                        </p>
+                        <p className="tabular text-xs text-muted-foreground">
+                          Est. {formatPrice(p.estimatedPrice)}
+                        </p>
+                        <p
+                          className={`tabular text-xs font-medium ${
+                            isExact
+                              ? 'text-muted-foreground'
+                              : isCheaper
+                                ? 'text-green-600'
+                                : 'text-destructive'
+                          }`}
+                        >
+                          {isExact
+                            ? 'On budget'
+                            : isCheaper
+                              ? `${formatPrice(diffAbs)} under`
+                              : `${formatPrice(diffAbs)} over`}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
