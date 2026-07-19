@@ -8,6 +8,14 @@ class ApiError extends Error {
   }
 }
 
+/**
+ * Extracts a human-readable message from an unknown error value, falling back
+ * to the provided default when the error is not an `Error` or has no message.
+ */
+export function errMessage(err: unknown, fallback: string): string {
+  return (err instanceof Error && err.message) || fallback
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options)
   if (!res.ok) {

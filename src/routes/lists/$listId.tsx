@@ -1,7 +1,18 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus, CornerDownLeft } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ShoppingCart,
+  DollarSign,
+  Zap,
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  CornerDownLeft,
+} from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -26,7 +37,8 @@ import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
-import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
+import { apiGet, apiPost, apiPut, apiDelete, errMessage } from '#/lib/api'
+import { renderSelectLabel } from '#/lib/select-label'
 import { Textarea } from '#/components/ui/textarea'
 import { Switch } from '#/components/ui/switch'
 import { toast } from '#/lib/toast'
@@ -85,20 +97,31 @@ function ListDetailPage() {
   const [selectedItemId, setSelectedItemId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [actualPrice, setActualPrice] = useState('')
-  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(null)
+  const [selectedListItem, setSelectedListItem] = useState<ListItem | null>(
+    null,
+  )
   const [error, setError] = useState('')
   const [quickName, setQuickName] = useState('')
   const [quickQuantity, setQuickQuantity] = useState('1')
 
-  const { data: listInfo, isLoading: listLoading, error: listError } = useQuery({
+  const {
+    data: listInfo,
+    isLoading: listLoading,
+    error: listError,
+  } = useQuery({
     queryKey: ['list', listId],
     queryFn: () => apiGet<ListInfo>(`/api/lists/${listId}`),
     enabled: !!session?.user && !!listId,
   })
 
-  const { data: listItemsData, isLoading: itemsLoading, error: listItemsError } = useQuery({
+  const {
+    data: listItemsData,
+    isLoading: itemsLoading,
+    error: listItemsError,
+  } = useQuery({
     queryKey: ['listItems', listId],
-    queryFn: () => apiGet<{ items: ListItem[] }>(`/api/lists/items?listId=${listId}`),
+    queryFn: () =>
+      apiGet<{ items: ListItem[] }>(`/api/lists/items?listId=${listId}`),
     enabled: !!session?.user && !!listId,
   })
   const listItems = listItemsData?.items ?? []
@@ -120,7 +143,8 @@ function ListDetailPage() {
 
   const { data: purchasesData } = useQuery({
     queryKey: ['purchases', listId],
-    queryFn: () => apiGet<{ purchases: Purchase[] }>(`/api/purchases?listId=${listId}`),
+    queryFn: () =>
+      apiGet<{ purchases: Purchase[] }>(`/api/purchases?listId=${listId}`),
     enabled: !!session?.user && !!listId,
   })
   const purchases = purchasesData?.purchases ?? []
@@ -130,7 +154,7 @@ function ListDetailPage() {
       apiPost('/api/lists/items', {
         shoppingListId: listId,
         itemId: selectedItemId,
-        quantity: parseInt(quantity) || 1,
+        quantity: parseInt(quantity, 10) || 1,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
@@ -139,7 +163,7 @@ function ListDetailPage() {
       setQuantity('1')
       setError('')
     },
-    onError: (err: any) => setError(err.message || 'Failed to add item'),
+    onError: (err) => setError(errMessage(err, 'Failed to add item')),
   })
 
   const quickAddMutation = useMutation({
@@ -147,7 +171,7 @@ function ListDetailPage() {
       apiPost('/api/lists/items/add', {
         shoppingListId: listId,
         name: quickName.trim(),
-        quantity: parseInt(quickQuantity) || 1,
+        quantity: parseInt(quickQuantity, 10) || 1,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
@@ -155,19 +179,21 @@ function ListDetailPage() {
       setQuickName('')
       setQuickQuantity('1')
     },
-    onError: (err: any) => toast(err.message || 'Failed to add item', 'destructive'),
+    onError: (err) =>
+      toast(errMessage(err, 'Failed to add item'), 'destructive'),
   })
 
   const removeItemMutation = useMutation({
     mutationFn: (id: string) => apiDelete('/api/lists/items', { id }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
   })
 
   const editItemMutation = useMutation({
     mutationFn: () =>
       apiPut('/api/lists/items', {
         id: editingListItem!.id,
-        quantity: parseInt(editQuantity) || 1,
+        quantity: parseInt(editQuantity, 10) || 1,
         unit: editUnit.trim() || null,
         notes: editNotes.trim() || null,
       }),
@@ -177,7 +203,7 @@ function ListDetailPage() {
       setEditingListItem(null)
       setError('')
     },
-    onError: (err: any) => setError(err.message || 'Failed to update item'),
+    onError: (err) => setError(errMessage(err, 'Failed to update item')),
   })
 
   const togglePurchasedMutation = useMutation({
@@ -186,8 +212,9 @@ function ListDetailPage() {
         id: listItem.id,
         purchased: !listItem.purchased,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
-    onError: (err: any) => toast(err.message || 'Failed to update', 'destructive'),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
+    onError: (err) => toast(errMessage(err, 'Failed to update'), 'destructive'),
   })
 
   const purchaseMutation = useMutation({
@@ -204,7 +231,7 @@ function ListDetailPage() {
       setActualPrice('')
       setError('')
     },
-    onError: (err: any) => setError(err.message || 'Failed to record purchase'),
+    onError: (err) => setError(errMessage(err, 'Failed to record purchase')),
   })
 
   const quickRecordMutation = useMutation({
@@ -217,7 +244,8 @@ function ListDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
       toast('Purchase recorded')
     },
-    onError: (err: any) => toast(err.message || 'Failed to record purchase', 'destructive'),
+    onError: (err) =>
+      toast(errMessage(err, 'Failed to record purchase'), 'destructive'),
   })
 
   const handleAddItem = () => {
@@ -342,7 +370,14 @@ function ListDetailPage() {
                         onValueChange={(v) => setSelectedItemId(v ?? '')}
                       >
                         <SelectTrigger className="w-full bg-background">
-                          <SelectValue placeholder="Select an item" />
+                          <SelectValue>
+                            {renderSelectLabel(
+                              availableItems,
+                              'Select an item',
+                              (item) =>
+                                `${item.name} (${formatPrice(item.estimatedPrice)})`,
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {availableItems.map((item) => (
@@ -388,7 +423,10 @@ function ListDetailPage() {
           <div className="rise-in surface-2 rounded-lg p-4 mb-6">
             <div className="flex items-end gap-3">
               <div className="flex-1 space-y-1.5">
-                <Label htmlFor="quick-name" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor="quick-name"
+                  className="text-xs text-muted-foreground"
+                >
                   Add a product
                 </Label>
                 <Input
@@ -401,7 +439,10 @@ function ListDetailPage() {
                 />
               </div>
               <div className="w-24 space-y-1.5">
-                <Label htmlFor="quick-qty" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor="quick-qty"
+                  className="text-xs text-muted-foreground"
+                >
                   Qty
                 </Label>
                 <Input
@@ -430,7 +471,8 @@ function ListDetailPage() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Press Enter or click Add. For catalog items with price tracking, use the catalog dialog.
+              Press Enter or click Add. For catalog items with price tracking,
+              use the catalog dialog.
             </p>
           </div>
 
@@ -447,9 +489,10 @@ function ListDetailPage() {
                 <p className="text-sm text-muted-foreground">Items</p>
                 <p className="tabular display-title text-2xl font-semibold text-foreground">
                   {listItems.length}
-                  {listItems.some(i => i.purchased) && (
+                  {listItems.some((i) => i.purchased) && (
                     <span className="text-base text-muted-foreground">
-                      {' '}({listItems.filter(i => i.purchased).length} bought)
+                      {' '}
+                      ({listItems.filter((i) => i.purchased).length} bought)
                     </span>
                   )}
                 </p>
@@ -474,7 +517,9 @@ function ListDetailPage() {
                 </Button>
                 <Link
                   to="/items"
-                  className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+                  className={cn(
+                    buttonVariants({ size: 'sm', variant: 'outline' }),
+                  )}
                 >
                   Browse Catalog
                 </Link>
@@ -486,8 +531,8 @@ function ListDetailPage() {
                 <div
                   key={listItem.id}
                   className={cn(
-                    "rise-in tile rounded-lg p-4 flex items-center justify-between gap-3 transition-opacity",
-                    listItem.purchased && "opacity-50",
+                    'rise-in tile rounded-lg p-4 flex items-center justify-between gap-3 transition-opacity',
+                    listItem.purchased && 'opacity-50',
                   )}
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
@@ -495,15 +540,20 @@ function ListDetailPage() {
                     <Switch
                       size="default"
                       checked={listItem.purchased}
-                      onCheckedChange={() => togglePurchasedMutation.mutate(listItem)}
+                      onCheckedChange={() =>
+                        togglePurchasedMutation.mutate(listItem)
+                      }
                       disabled={togglePurchasedMutation.isPending}
                       aria-label={`Mark ${listItem.itemName} as purchased`}
                     />
                     <div className="min-w-0">
-                      <h3 className={cn(
-                        "font-semibold text-foreground truncate",
-                        listItem.purchased && "line-through text-muted-foreground",
-                      )}>
+                      <h3
+                        className={cn(
+                          'font-semibold text-foreground truncate',
+                          listItem.purchased &&
+                            'line-through text-muted-foreground',
+                        )}
+                      >
                         {listItem.itemName}
                       </h3>
                       <p className="tabular text-sm text-muted-foreground">
@@ -521,10 +571,13 @@ function ListDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <p className={cn(
-                      "tabular font-semibold text-foreground mr-2 hidden sm:block",
-                      listItem.purchased && "line-through text-muted-foreground",
-                    )}>
+                    <p
+                      className={cn(
+                        'tabular font-semibold text-foreground mr-2 hidden sm:block',
+                        listItem.purchased &&
+                          'line-through text-muted-foreground',
+                      )}
+                    >
                       {formatPrice(listItem.estimatedPrice * listItem.quantity)}
                     </p>
                     <Button
@@ -600,11 +653,14 @@ function ListDetailPage() {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             Qty {p.quantity} &middot;{' '}
-                            {new Date(p.purchasedAt).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
+                            {new Date(p.purchasedAt).toLocaleDateString(
+                              'id-ID',
+                              {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              },
+                            )}
                           </p>
                         </div>
                       </div>
@@ -740,10 +796,7 @@ function ListDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button

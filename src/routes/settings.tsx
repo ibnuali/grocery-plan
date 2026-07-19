@@ -14,7 +14,8 @@ import {
 } from '#/components/ui/select'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
-import { apiGet, apiPut } from '#/lib/api'
+import { apiGet, apiPut, errMessage } from '#/lib/api'
+import { renderSelectLabel } from '#/lib/select-label'
 import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/settings')({
@@ -42,21 +43,28 @@ function SettingsPage() {
   // Load current user location
   const { data: userLocation, isLoading: locationLoading } = useQuery({
     queryKey: ['userLocation'],
-    queryFn: () => apiGet<{ provinceId: string | null; cityId: string | null }>('/api/user/location'),
+    queryFn: () =>
+      apiGet<{ provinceId: string | null; cityId: string | null }>(
+        '/api/user/location',
+      ),
     enabled: !!session?.user,
   })
 
   // Load provinces
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ['provinces'],
-    queryFn: () => apiGet<{ provinces: Province[] }>('/api/locations/provinces'),
+    queryFn: () =>
+      apiGet<{ provinces: Province[] }>('/api/locations/provinces'),
   })
   const provinces = provincesData?.provinces ?? []
 
   // Load cities when province changes
   const { data: citiesData, isLoading: citiesLoading } = useQuery({
     queryKey: ['cities', selectedProvince],
-    queryFn: () => apiGet<{ cities: City[] }>(`/api/locations/cities?provinceId=${selectedProvince}`),
+    queryFn: () =>
+      apiGet<{ cities: City[] }>(
+        `/api/locations/cities?provinceId=${selectedProvince}`,
+      ),
     enabled: !!selectedProvince,
   })
   const cities = citiesData?.cities ?? []
@@ -69,14 +77,11 @@ function SettingsPage() {
     }
   }, [userLocation])
 
-  // Reset city when province changes (but not on initial load)
-  const [provinceInitialized, setProvinceInitialized] = useState(false)
-  useEffect(() => {
-    if (provinceInitialized) {
-      setSelectedCity('')
-    }
-    setProvinceInitialized(true)
-  }, [selectedProvince])
+  // User-initiated province change: switch province and clear city selection.
+  const handleProvinceChange = (v: string | null) => {
+    setSelectedProvince(v ?? '')
+    setSelectedCity('')
+  }
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -88,7 +93,8 @@ function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['userLocation'] })
       toast('Location saved')
     },
-    onError: (err: any) => toast(err.message || 'Failed to save location', 'destructive'),
+    onError: (err) =>
+      toast(errMessage(err, 'Failed to save location'), 'destructive'),
   })
 
   if (isPending || locationLoading) return <LoadingSpinner />
@@ -96,7 +102,9 @@ function SettingsPage() {
   if (!session?.user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to access settings.</p>
+        <p className="text-muted-foreground">
+          Please sign in to access settings.
+        </p>
       </div>
     )
   }
@@ -111,7 +119,9 @@ function SettingsPage() {
             <h1 className="display-title text-2xl sm:text-3xl font-semibold text-foreground mb-1">
               Settings
             </h1>
-            <p className="text-muted-foreground">Manage your account preferences</p>
+            <p className="text-muted-foreground">
+              Manage your account preferences
+            </p>
           </div>
 
           <div className="rise-in max-w-lg">
@@ -133,10 +143,18 @@ function SettingsPage() {
                   <Label htmlFor="province">Province</Label>
                   <Select
                     value={selectedProvince}
-                    onValueChange={(v) => setSelectedProvince(v ?? '')}
+                    onValueChange={handleProvinceChange}
                   >
-                    <SelectTrigger className="w-full bg-background" disabled={provincesLoading}>
-                      <SelectValue placeholder={provincesLoading ? 'Loading...' : 'Select province'} />
+                    <SelectTrigger
+                      className="w-full bg-background"
+                      disabled={provincesLoading}
+                    >
+                      <SelectValue>
+                        {renderSelectLabel(
+                          provinces,
+                          provincesLoading ? 'Loading...' : 'Select province',
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {provinces.map((prov) => (
@@ -153,18 +171,21 @@ function SettingsPage() {
                   <Select
                     value={selectedCity}
                     onValueChange={(v) => setSelectedCity(v ?? '')}
-                    disabled={!selectedProvince}
                   >
-                    <SelectTrigger className="w-full bg-background" disabled={!selectedProvince || citiesLoading}>
-                      <SelectValue
-                        placeholder={
+                    <SelectTrigger
+                      className="w-full bg-background"
+                      disabled={!selectedProvince || citiesLoading}
+                    >
+                      <SelectValue>
+                        {renderSelectLabel(
+                          cities,
                           !selectedProvince
                             ? 'Select a province first'
                             : citiesLoading
                               ? 'Loading...'
-                              : 'Select city'
-                        }
-                      />
+                              : 'Select city',
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {cities.map((c) => (

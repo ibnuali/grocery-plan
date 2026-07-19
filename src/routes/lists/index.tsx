@@ -37,7 +37,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
 import { toast } from '#/lib/toast'
 import { Copy } from 'lucide-react'
 
-export const Route = createFileRoute('/lists')({
+export const Route = createFileRoute('/lists/')({
   component: ListsPage,
 })
 

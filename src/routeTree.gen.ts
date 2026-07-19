@@ -12,10 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ListsRouteImport } from './routes/lists'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as ListsListIdRouteImport } from './routes/lists/$listId'
 import { Route as ApiPurchasesIndexRouteImport } from './routes/api/purchases/index'
 import { Route as ApiListsIndexRouteImport } from './routes/api/lists/index'
@@ -49,11 +49,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ListsRoute = ListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ItemsRoute = ItemsRouteImport.update({
   id: '/items',
   path: '/items',
@@ -67,6 +62,11 @@ const CategoriesRoute = CategoriesRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsIndexRoute = ListsIndexRouteImport.update({
+  id: '/lists/',
+  path: '/lists/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListsListIdRoute = ListsListIdRouteImport.update({
@@ -159,11 +159,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
   '/items': typeof ItemsRoute
-  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
+  '/lists/': typeof ListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
   '/api/catalog/items': typeof ApiCatalogItemsRoute
@@ -185,11 +185,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
   '/items': typeof ItemsRoute
-  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
+  '/lists': typeof ListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
   '/api/catalog/items': typeof ApiCatalogItemsRoute
@@ -212,11 +212,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
   '/items': typeof ItemsRoute
-  '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
+  '/lists/': typeof ListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
   '/api/catalog/items': typeof ApiCatalogItemsRoute
@@ -240,11 +240,11 @@ export interface FileRouteTypes {
     | '/'
     | '/categories'
     | '/items'
-    | '/lists'
     | '/login'
     | '/settings'
     | '/signup'
     | '/lists/$listId'
+    | '/lists/'
     | '/api/auth/$'
     | '/api/catalog/categories'
     | '/api/catalog/items'
@@ -266,11 +266,11 @@ export interface FileRouteTypes {
     | '/'
     | '/categories'
     | '/items'
-    | '/lists'
     | '/login'
     | '/settings'
     | '/signup'
     | '/lists/$listId'
+    | '/lists'
     | '/api/auth/$'
     | '/api/catalog/categories'
     | '/api/catalog/items'
@@ -292,11 +292,11 @@ export interface FileRouteTypes {
     | '/'
     | '/categories'
     | '/items'
-    | '/lists'
     | '/login'
     | '/settings'
     | '/signup'
     | '/lists/$listId'
+    | '/lists/'
     | '/api/auth/$'
     | '/api/catalog/categories'
     | '/api/catalog/items'
@@ -319,11 +319,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CategoriesRoute: typeof CategoriesRoute
   ItemsRoute: typeof ItemsRoute
-  ListsRoute: typeof ListsRouteWithChildren
-  ListsListIdRoute: typeof ListsListIdRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  ListsListIdRoute: typeof ListsListIdRoute
+  ListsIndexRoute: typeof ListsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCatalogCategoriesRoute: typeof ApiCatalogCategoriesRoute
   ApiCatalogItemsRoute: typeof ApiCatalogItemsRoute
@@ -365,13 +365,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lists': {
-      id: '/lists'
-      path: '/lists'
-      fullPath: '/lists'
-      preLoaderRoute: typeof ListsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/items': {
       id: '/items'
       path: '/items'
@@ -391,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/': {
+      id: '/lists/'
+      path: '/lists'
+      fullPath: '/lists/'
+      preLoaderRoute: typeof ListsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/$listId': {
@@ -515,17 +515,15 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const ListsRouteWithChildren = ListsRoute
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriesRoute: CategoriesRoute,
   ItemsRoute: ItemsRoute,
-  ListsRoute: ListsRouteWithChildren,
-  ListsListIdRoute: ListsListIdRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  ListsListIdRoute: ListsListIdRoute,
+  ListsIndexRoute: ListsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCatalogCategoriesRoute: ApiCatalogCategoriesRoute,
   ApiCatalogItemsRoute: ApiCatalogItemsRoute,
