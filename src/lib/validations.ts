@@ -22,12 +22,16 @@ export const createItemSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   categoryId: z.string().min(1, 'Category is required'),
   estimatedPrice: z.number().int().nonnegative('Price must be non-negative'),
+  globalItemId: z.string().optional(),
+  cityId: z.string().optional(),
 })
 
 export const updateItemSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   categoryId: z.string().min(1, 'Category is required'),
   estimatedPrice: z.number().int().nonnegative('Price must be non-negative'),
+  globalItemId: z.string().optional(),
+  cityId: z.string().optional(),
 })
 
 export const createListSchema = z.object({

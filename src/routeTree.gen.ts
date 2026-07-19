@@ -17,6 +17,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ListsListIdRouteImport } from './routes/lists/$listId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiCatalogCategoriesRouteImport } from './routes/api/catalog/categories'
+import { Route as ApiCatalogItemsRouteImport } from './routes/api/catalog/items'
+import { Route as ApiCatalogPriceRouteImport } from './routes/api/catalog/price'
 import { Route as ApiCategoriesIndexRouteImport } from './routes/api/categories/index'
 import { Route as ApiCategoriesSplatRouteImport } from './routes/api/categories/$'
 import { Route as ApiItemsIndexRouteImport } from './routes/api/items/index'
@@ -64,6 +67,21 @@ const ListsListIdRoute = ListsListIdRouteImport.update({
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCatalogCategoriesRoute = ApiCatalogCategoriesRouteImport.update({
+  id: '/api/catalog/categories',
+  path: '/api/catalog/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCatalogItemsRoute = ApiCatalogItemsRouteImport.update({
+  id: '/api/catalog/items',
+  path: '/api/catalog/items',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCatalogPriceRoute = ApiCatalogPriceRouteImport.update({
+  id: '/api/catalog/price',
+  path: '/api/catalog/price',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCategoriesIndexRoute = ApiCategoriesIndexRouteImport.update({
@@ -116,6 +134,9 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
+  '/api/catalog/items': typeof ApiCatalogItemsRoute
+  '/api/catalog/price': typeof ApiCatalogPriceRoute
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
@@ -134,6 +155,9 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
+  '/api/catalog/items': typeof ApiCatalogItemsRoute
+  '/api/catalog/price': typeof ApiCatalogPriceRoute
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
@@ -153,6 +177,9 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/catalog/categories': typeof ApiCatalogCategoriesRoute
+  '/api/catalog/items': typeof ApiCatalogItemsRoute
+  '/api/catalog/price': typeof ApiCatalogPriceRoute
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
@@ -173,6 +200,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
+    | '/api/catalog/categories'
+    | '/api/catalog/items'
+    | '/api/catalog/price'
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
@@ -191,6 +221,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
+    | '/api/catalog/categories'
+    | '/api/catalog/items'
+    | '/api/catalog/price'
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
@@ -209,6 +242,9 @@ export interface FileRouteTypes {
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
+    | '/api/catalog/categories'
+    | '/api/catalog/items'
+    | '/api/catalog/price'
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
@@ -227,6 +263,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCatalogCategoriesRoute: typeof ApiCatalogCategoriesRoute
+  ApiCatalogItemsRoute: typeof ApiCatalogItemsRoute
+  ApiCatalogPriceRoute: typeof ApiCatalogPriceRoute
   ApiCategoriesSplatRoute: typeof ApiCategoriesSplatRoute
   ApiItemsSplatRoute: typeof ApiItemsSplatRoute
   ApiListsSplatRoute: typeof ApiListsSplatRoute
@@ -293,6 +332,27 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/catalog/categories': {
+      id: '/api/catalog/categories'
+      path: '/api/catalog/categories'
+      fullPath: '/api/catalog/categories'
+      preLoaderRoute: typeof ApiCatalogCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/catalog/items': {
+      id: '/api/catalog/items'
+      path: '/api/catalog/items'
+      fullPath: '/api/catalog/items'
+      preLoaderRoute: typeof ApiCatalogItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/catalog/price': {
+      id: '/api/catalog/price'
+      path: '/api/catalog/price'
+      fullPath: '/api/catalog/price'
+      preLoaderRoute: typeof ApiCatalogPriceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/categories/': {
@@ -372,6 +432,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCatalogCategoriesRoute: ApiCatalogCategoriesRoute,
+  ApiCatalogItemsRoute: ApiCatalogItemsRoute,
+  ApiCatalogPriceRoute: ApiCatalogPriceRoute,
   ApiCategoriesSplatRoute: ApiCategoriesSplatRoute,
   ApiItemsSplatRoute: ApiItemsSplatRoute,
   ApiListsSplatRoute: ApiListsSplatRoute,
