@@ -35,6 +35,9 @@ export const createListSchema = z.object({
   period: z.enum(['weekly', 'monthly']),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
+}).refine(d => new Date(d.endDate) > new Date(d.startDate), {
+  message: 'End date must be after start date',
+  path: ['endDate'],
 })
 
 export const updateListSchema = z.object({
@@ -42,6 +45,9 @@ export const updateListSchema = z.object({
   period: z.enum(['weekly', 'monthly']),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
+}).refine(d => new Date(d.endDate) > new Date(d.startDate), {
+  message: 'End date must be after start date',
+  path: ['endDate'],
 })
 
 export const addListItemSchema = z.object({
