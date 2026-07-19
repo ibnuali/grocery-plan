@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { db } from '#/db'
-import { item } from '#/db/schema'
+import { item, category, globalItem, globalPrice, user } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { requireAuth } from '#/lib/auth'
 import { validateBody, updateItemSchema } from '#/lib/validations'
@@ -14,9 +14,36 @@ export const Route = createFileRoute('/api/items/$')({
 
         const id = params._splat!
 
+        // Get user's cityId for price lookup
+        const [userData] = await db
+          .select({ cityId: user.cityId })
+          .from(user)
+          .where(eq(user.id, session.user.id))
+
         const [found] = await db
-          .select()
+          .select({
+            id: item.id,
+            name: item.name,
+            categoryId: item.categoryId,
+            estimatedPrice: item.estimatedPrice,
+            globalItemId: item.globalItemId,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+            categoryName: category.name,
+            globalItemName: globalItem.name,
+            globalItemUnit: globalItem.unit,
+            suggestedPrice: globalPrice.price,
+          })
           .from(item)
+          .leftJoin(category, eq(item.categoryId, category.id))
+          .leftJoin(globalItem, eq(item.globalItemId, globalItem.id))
+          .leftJoin(
+            globalPrice,
+            and(
+              eq(globalPrice.globalItemId, item.globalItemId),
+              eq(globalPrice.cityId, userData?.cityId ?? ''),
+            ),
+          )
           .where(and(eq(item.id, id), eq(item.userId, session.user.id)))
 
         if (!found) {
@@ -36,6 +63,7 @@ export const Route = createFileRoute('/api/items/$')({
             name: body.name,
             categoryId: body.categoryId,
             estimatedPrice: body.estimatedPrice,
+            globalItemId: body.globalItemId ?? null,
             updatedAt: new Date(),
           })
           .where(and(eq(item.id, id), eq(item.userId, session.user.id)))
