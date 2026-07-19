@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
@@ -19,6 +19,7 @@ import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
+import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/categories')({
   component: CategoriesPage,
@@ -38,12 +39,16 @@ function CategoriesPage() {
   const [categoryName, setCategoryName] = useState('')
   const [error, setError] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiGet<{ categories: Category[] }>('/api/categories'),
     enabled: !!session?.user,
   })
   const categories = data?.categories ?? []
+
+  useEffect(() => {
+    if (categoriesError) toast('Failed to load categories', 'destructive')
+  }, [categoriesError])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
