@@ -12,6 +12,7 @@ export function validateBody<T extends z.ZodType>(schema: T, body: unknown): z.i
 
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
+  globalCategoryId: z.string().optional(),
 })
 
 export const updateCategorySchema = z.object({
