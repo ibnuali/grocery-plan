@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Package } from 'lucide-react'
+import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -55,6 +55,7 @@ function ItemsPage() {
   const [itemCategoryId, setItemCategoryId] = useState('')
   const [itemPrice, setItemPrice] = useState('')
   const [error, setError] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { data: itemsData, isLoading: itemsLoading } = useQuery({
     queryKey: ['items'],
@@ -73,6 +74,16 @@ function ItemsPage() {
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.id, c.name])),
     [categories],
+  )
+
+  const filteredItems = useMemo(
+    () =>
+      searchQuery.trim()
+        ? items.filter((item) =>
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
+        : items,
+    [items, searchQuery],
   )
 
   const saveMutation = useMutation({
@@ -246,6 +257,18 @@ function ItemsPage() {
             </Dialog>
           </div>
 
+          {items.length > 0 && (
+            <div className="relative mb-6">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search items by name…"
+                className="pl-9 bg-background"
+              />
+            </div>
+          )}
+
           {items.length === 0 ? (
             <div className="rise-in text-center py-16 surface rounded-lg">
               <Package className="size-10 text-muted-foreground/50 mx-auto mb-4" />
@@ -260,9 +283,19 @@ function ItemsPage() {
                 Add Item
               </Button>
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="rise-in text-center py-16 surface rounded-lg">
+              <Search className="size-10 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No matches
+              </h3>
+              <p className="text-muted-foreground">
+                No items match "{searchQuery}".
+              </p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((item, i) => (
+              {filteredItems.map((item, i) => (
                 <div
                   key={item.id}
                   className="rise-in tile rounded-lg p-5"
