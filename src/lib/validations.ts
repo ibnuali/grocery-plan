@@ -61,6 +61,13 @@ export const addListItemSchema = z.object({
   quantity: z.number().int().positive().default(1),
 })
 
+export const updateListItemSchema = z.object({
+  id: z.string().min(1, 'id is required'),
+  quantity: z.number().int().positive().optional(),
+  unit: z.string().trim().nullable().optional(),
+  notes: z.string().trim().nullable().optional(),
+})
+
 export const deleteListItemSchema = z.object({
   id: z.string().min(1, 'id is required'),
 })

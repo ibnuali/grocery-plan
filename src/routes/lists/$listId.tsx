@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus, CornerDownLeft } from 'lucide-react'
+import { Plus, Pencil, Trash2, ShoppingCart, DollarSign, Zap, TrendingDown, TrendingUp, Minus, CornerDownLeft } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -26,7 +26,8 @@ import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { formatPrice } from '#/lib/format'
-import { apiGet, apiPost, apiDelete } from '#/lib/api'
+import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
+import { Textarea } from '#/components/ui/textarea'
 import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/lists/$listId')({
@@ -74,6 +75,11 @@ function ListDetailPage() {
   const queryClient = useQueryClient()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingListItem, setEditingListItem] = useState<ListItem | null>(null)
+  const [editQuantity, setEditQuantity] = useState('1')
+  const [editUnit, setEditUnit] = useState('')
+  const [editNotes, setEditNotes] = useState('')
   const [selectedItemId, setSelectedItemId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [actualPrice, setActualPrice] = useState('')
@@ -155,6 +161,23 @@ function ListDetailPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['listItems', listId] }),
   })
 
+  const editItemMutation = useMutation({
+    mutationFn: () =>
+      apiPut('/api/lists/items', {
+        id: editingListItem!.id,
+        quantity: parseInt(editQuantity) || 1,
+        unit: editUnit.trim() || null,
+        notes: editNotes.trim() || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listItems', listId] })
+      setEditDialogOpen(false)
+      setEditingListItem(null)
+      setError('')
+    },
+    onError: (err: any) => setError(err.message || 'Failed to update item'),
+  })
+
   const purchaseMutation = useMutation({
     mutationFn: () =>
       apiPost('/api/purchases', {
@@ -219,6 +242,20 @@ function ListDetailPage() {
     setActualPrice((listItem.estimatedPrice / 100).toFixed(2))
     setError('')
     setPurchaseDialogOpen(true)
+  }
+
+  const openEditDialog = (listItem: ListItem) => {
+    setEditingListItem(listItem)
+    setEditQuantity(String(listItem.quantity))
+    setEditUnit(listItem.unit ?? '')
+    setEditNotes(listItem.notes ?? '')
+    setError('')
+    setEditDialogOpen(true)
+  }
+
+  const handleEditSave = () => {
+    setError('')
+    editItemMutation.mutate()
   }
 
   const totalEstimated = listItems.reduce(
@@ -480,6 +517,13 @@ function ListDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      onClick={() => openEditDialog(listItem)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() => handleRemoveItem(listItem.id)}
                       className="text-destructive hover:text-destructive"
                     >
@@ -613,6 +657,70 @@ function ListDetailPage() {
               disabled={purchaseMutation.isPending || !actualPrice}
             >
               {purchaseMutation.isPending ? 'Saving...' : 'Save Purchase'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit List Item Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Item</DialogTitle>
+            <DialogDescription>
+              Adjust quantity, unit, or notes for {editingListItem?.itemName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {error && (
+              <div className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-quantity">Quantity</Label>
+              <Input
+                id="edit-quantity"
+                type="number"
+                min="1"
+                value={editQuantity}
+                onChange={(e) => setEditQuantity(e.target.value)}
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-unit">Unit</Label>
+              <Input
+                id="edit-unit"
+                value={editUnit}
+                onChange={(e) => setEditUnit(e.target.value)}
+                placeholder="e.g., kg, pcs, pack"
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Optional notes"
+                className="bg-background"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={editItemMutation.isPending}
+            >
+              {editItemMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
