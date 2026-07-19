@@ -32,6 +32,7 @@ import { Route as ApiCatalogItemsRouteImport } from './routes/api/catalog/items'
 import { Route as ApiCatalogCategoriesRouteImport } from './routes/api/catalog/categories'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiListsItemsIndexRouteImport } from './routes/api/lists/items/index'
+import { Route as ApiListsItemsAddRouteImport } from './routes/api/lists/items/add'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -148,6 +149,11 @@ const ApiListsItemsIndexRoute = ApiListsItemsIndexRouteImport.update({
   path: '/api/lists/items/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiListsItemsAddRoute = ApiListsItemsAddRouteImport.update({
+  id: '/api/lists/items/add',
+  path: '/api/lists/items/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/api/items/': typeof ApiItemsIndexRoute
   '/api/lists/': typeof ApiListsIndexRoute
   '/api/purchases/': typeof ApiPurchasesIndexRoute
+  '/api/lists/items/add': typeof ApiListsItemsAddRoute
   '/api/lists/items/': typeof ApiListsItemsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/api/items': typeof ApiItemsIndexRoute
   '/api/lists': typeof ApiListsIndexRoute
   '/api/purchases': typeof ApiPurchasesIndexRoute
+  '/api/lists/items/add': typeof ApiListsItemsAddRoute
   '/api/lists/items': typeof ApiListsItemsIndexRoute
 }
 export interface FileRoutesById {
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/api/items/': typeof ApiItemsIndexRoute
   '/api/lists/': typeof ApiListsIndexRoute
   '/api/purchases/': typeof ApiPurchasesIndexRoute
+  '/api/lists/items/add': typeof ApiListsItemsAddRoute
   '/api/lists/items/': typeof ApiListsItemsIndexRoute
 }
 export interface FileRouteTypes {
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/api/items/'
     | '/api/lists/'
     | '/api/purchases/'
+    | '/api/lists/items/add'
     | '/api/lists/items/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/api/items'
     | '/api/lists'
     | '/api/purchases'
+    | '/api/lists/items/add'
     | '/api/lists/items'
   id:
     | '__root__'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/api/items/'
     | '/api/lists/'
     | '/api/purchases/'
+    | '/api/lists/items/add'
     | '/api/lists/items/'
   fileRoutesById: FileRoutesById
 }
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   ApiItemsIndexRoute: typeof ApiItemsIndexRoute
   ApiListsIndexRoute: typeof ApiListsIndexRoute
   ApiPurchasesIndexRoute: typeof ApiPurchasesIndexRoute
+  ApiListsItemsAddRoute: typeof ApiListsItemsAddRoute
   ApiListsItemsIndexRoute: typeof ApiListsItemsIndexRoute
 }
 
@@ -491,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiListsItemsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/lists/items/add': {
+      id: '/api/lists/items/add'
+      path: '/api/lists/items/add'
+      fullPath: '/api/lists/items/add'
+      preLoaderRoute: typeof ApiListsItemsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -526,8 +546,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiItemsIndexRoute: ApiItemsIndexRoute,
   ApiListsIndexRoute: ApiListsIndexRoute,
   ApiPurchasesIndexRoute: ApiPurchasesIndexRoute,
+  ApiListsItemsAddRoute: ApiListsItemsAddRoute,
   ApiListsItemsIndexRoute: ApiListsItemsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
