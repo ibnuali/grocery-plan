@@ -278,7 +278,7 @@ function ItemsPage() {
                           {item.name}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                          {categoryMap[item.categoryId] || 'Unknown'}
+                          {item.categoryName || categoryMap[item.categoryId] || 'Uncategorized'}
                         </p>
                       </div>
                     </div>
