@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { cn } from '#/lib/utils'
+import { formatPrice } from '#/lib/format'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
 import { apiGet, apiPost, apiPut, apiDelete } from '#/lib/api'
@@ -45,6 +46,8 @@ interface ShoppingList {
   startDate: string
   endDate: string
   createdAt: string
+  itemCount: number
+  totalEstimate: number
 }
 
 function ListsPage() {
@@ -316,12 +319,20 @@ function ListsPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border">
+                  <div className="mt-4 pt-4 border-t border-border space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CalendarDays className="size-4" />
                       <span className="tabular">
                         {formatDate(list.startDate)} –{' '}
                         {formatDate(list.endDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {list.itemCount} {list.itemCount === 1 ? 'item' : 'items'}
+                      </span>
+                      <span className="font-medium tabular">
+                        {formatPrice(list.totalEstimate)}
                       </span>
                     </div>
                   </div>
