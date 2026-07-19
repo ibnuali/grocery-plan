@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Tag } from 'lucide-react'
+import { Plus, Pencil, Trash2, Tag, Globe } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -15,6 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '#/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { cn } from '#/lib/utils'
 import { AppHeader } from '#/components/layout/app-header'
 import { LoadingSpinner } from '#/components/layout/loading'
@@ -28,7 +35,13 @@ export const Route = createFileRoute('/categories')({
 interface Category {
   id: string
   name: string
+  globalCategoryId?: string | null
   createdAt: string
+}
+
+interface GlobalCategory {
+  id: string
+  name: string
 }
 
 function CategoriesPage() {
@@ -37,6 +50,7 @@ function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryName, setCategoryName] = useState('')
+  const [selectedGlobalCategoryId, setSelectedGlobalCategoryId] = useState<string>('')
   const [error, setError] = useState('')
 
   const { data, isLoading, error: categoriesError } = useQuery({
@@ -45,6 +59,13 @@ function CategoriesPage() {
     enabled: !!session?.user,
   })
   const categories = data?.categories ?? []
+
+  const { data: globalData } = useQuery({
+    queryKey: ['global-categories'],
+    queryFn: () => apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
+    enabled: !!session?.user,
+  })
+  const globalCategories = globalData?.categories ?? []
 
   useEffect(() => {
     if (categoriesError) toast('Failed to load categories', 'destructive')
@@ -55,13 +76,17 @@ function CategoriesPage() {
       if (editingCategory) {
         return apiPut(`/api/categories/${editingCategory.id}`, { name: categoryName.trim() })
       }
-      return apiPost('/api/categories', { name: categoryName.trim() })
+      return apiPost('/api/categories', {
+        name: categoryName.trim(),
+        globalCategoryId: selectedGlobalCategoryId || undefined,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setDialogOpen(false)
       setEditingCategory(null)
       setCategoryName('')
+      setSelectedGlobalCategoryId('')
       setError('')
     },
     onError: (err: any) => setError(err.message || 'Failed to save category'),
@@ -86,6 +111,7 @@ function CategoriesPage() {
   const openEditDialog = (category: Category) => {
     setEditingCategory(category)
     setCategoryName(category.name)
+    setSelectedGlobalCategoryId('')
     setError('')
     setDialogOpen(true)
   }
@@ -93,8 +119,15 @@ function CategoriesPage() {
   const openCreateDialog = () => {
     setEditingCategory(null)
     setCategoryName('')
+    setSelectedGlobalCategoryId('')
     setError('')
     setDialogOpen(true)
+  }
+
+  // Find the global category name for a user category
+  const getGlobalCategoryName = (globalCategoryId: string | null | undefined) => {
+    if (!globalCategoryId) return null
+    return globalCategories.find((gc) => gc.id === globalCategoryId)?.name ?? null
   }
 
   if (isPending || isLoading) return <LoadingSpinner />
@@ -159,6 +192,29 @@ function CategoriesPage() {
                       className="bg-background"
                     />
                   </div>
+                  {!editingCategory && globalCategories.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="global-category">Link to Global Category</Label>
+                      <Select
+                        value={selectedGlobalCategoryId}
+                        onValueChange={setSelectedGlobalCategoryId}
+                      >
+                        <SelectTrigger id="global-category" className="w-full bg-background">
+                          <SelectValue placeholder="None (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {globalCategories.map((gc) => (
+                            <SelectItem key={gc.id} value={gc.id}>
+                              {gc.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Linking to a global category helps with smart suggestions.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
@@ -178,64 +234,123 @@ function CategoriesPage() {
             </Dialog>
           </div>
 
-          {categories.length === 0 ? (
-            <div className="rise-in text-center py-16 surface rounded-lg">
-              <Tag className="size-10 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No categories yet
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first category to start organizing items.
-              </p>
-              <Button size="sm" onClick={openCreateDialog}>
-                <Plus className="size-4" />
-                Add Category
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map((cat, i) => (
-                <div
-                  key={cat.id}
-                  className="rise-in tile rounded-lg p-5"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <div className="flex items-start justify-between">
+          {/* Global Categories Section */}
+          {globalCategories.length > 0 && (
+            <section className="rise-in mb-10">
+              <div className="flex items-center gap-2 mb-4">
+                <Globe className="size-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Global Categories
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {globalCategories.map((gc, i) => (
+                  <div
+                    key={gc.id}
+                    className="rise-in tile rounded-lg p-5 opacity-80"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
                     <div className="flex items-center gap-3">
                       <div className="icon-badge size-10 rounded-md">
-                        <Tag className="size-5" />
+                        <Globe className="size-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">
-                          {cat.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground">
+                            {gc.name}
+                          </h3>
+                          <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            Global
+                          </span>
+                        </div>
                         <p className="text-xs text-muted-foreground">
-                          Created {new Date(cat.createdAt).toLocaleDateString()}
+                          Read-only
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => openEditDialog(cat)}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleDelete(cat.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </section>
           )}
+
+          {/* User Categories Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Tag className="size-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Your Categories
+              </h2>
+            </div>
+
+            {categories.length === 0 ? (
+              <div className="rise-in text-center py-16 surface rounded-lg">
+                <Tag className="size-10 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  No categories yet
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Create your first category to start organizing items.
+                </p>
+                <Button size="sm" onClick={openCreateDialog}>
+                  <Plus className="size-4" />
+                  Add Category
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((cat, i) => {
+                  const globalName = getGlobalCategoryName(cat.globalCategoryId)
+                  return (
+                    <div
+                      key={cat.id}
+                      className="rise-in tile rounded-lg p-5"
+                      style={{ animationDelay: `${i * 60}ms` }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="icon-badge size-10 rounded-md">
+                            <Tag className="size-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">
+                              {cat.name}
+                            </h3>
+                            {globalName && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Globe className="size-3" />
+                                Linked to {globalName}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Created {new Date(cat.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => openEditDialog(cat)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleDelete(cat.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
         </div>
       </main>
     </div>

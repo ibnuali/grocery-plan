@@ -32,6 +32,7 @@ export const Route = createFileRoute('/api/categories/')({
             id,
             name: body.name,
             userId: session.user.id,
+            globalCategoryId: body.globalCategoryId || null,
             createdAt: now,
             updatedAt: now,
           })
