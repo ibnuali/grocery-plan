@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Package, Search, Globe, Check } from 'lucide-react'
 import { authClient } from '#/lib/auth-client'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -45,18 +45,38 @@ interface Item {
   estimatedPrice: number
   createdAt: string
   categoryName?: string
+  globalItemId?: string | null
 }
+
+interface GlobalCategory {
+  id: string
+  name: string
+}
+
+interface GlobalItem {
+  id: string
+  name: string
+  unit: string
+  globalCategoryId: string
+  categoryName: string
+}
+
+type AddMode = 'catalog' | 'custom'
 
 function ItemsPage() {
   const { data: session, isPending } = authClient.useSession()
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [addMode, setAddMode] = useState<AddMode>('catalog')
   const [itemName, setItemName] = useState('')
   const [itemCategoryId, setItemCategoryId] = useState('')
   const [itemPrice, setItemPrice] = useState('')
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [selectedGlobalCategoryId, setSelectedGlobalCategoryId] = useState('')
+  const [selectedGlobalItemId, setSelectedGlobalItemId] = useState('')
 
   const { data: itemsData, isLoading: itemsLoading, error: itemsError } = useQuery({
     queryKey: ['items'],
@@ -71,6 +91,45 @@ function ItemsPage() {
     enabled: !!session?.user,
   })
   const categories = categoriesData?.categories ?? []
+
+  const { data: globalCategoriesData } = useQuery({
+    queryKey: ['catalogCategories'],
+    queryFn: () => apiGet<{ categories: GlobalCategory[] }>('/api/catalog/categories'),
+    enabled: !!session?.user && dialogOpen && addMode === 'catalog',
+  })
+  const globalCategories = globalCategoriesData?.categories ?? []
+
+  const { data: globalItemsData } = useQuery({
+    queryKey: ['catalogItems', selectedGlobalCategoryId, catalogSearch],
+    queryFn: () => {
+      const params = new URLSearchParams()
+      if (selectedGlobalCategoryId) params.set('categoryId', selectedGlobalCategoryId)
+      if (catalogSearch.trim()) params.set('search', catalogSearch.trim())
+      return apiGet<{ items: GlobalItem[] }>(`/api/catalog/items?${params}`)
+    },
+    enabled: !!session?.user && dialogOpen && addMode === 'catalog',
+  })
+  const globalItems = globalItemsData?.items ?? []
+
+  const { data: userData } = useQuery({
+    queryKey: ['userLocation'],
+    queryFn: () => apiGet<{ provinceId: string | null; cityId: string | null }>('/api/user/location'),
+    enabled: !!session?.user && dialogOpen && addMode === 'catalog',
+  })
+
+  const selectedGlobalItem = useMemo(
+    () => globalItems.find((g) => g.id === selectedGlobalItemId) ?? null,
+    [globalItems, selectedGlobalItemId],
+  )
+
+  const { data: priceData } = useQuery({
+    queryKey: ['catalogPrice', selectedGlobalItemId, userData?.cityId],
+    queryFn: () =>
+      apiGet<{ price: { price: number } }>(
+        `/api/catalog/price?globalItemId=${selectedGlobalItemId}&cityId=${userData!.cityId}`,
+      ),
+    enabled: !!selectedGlobalItemId && !!userData?.cityId,
+  })
 
   useEffect(() => {
     if (itemsError) toast('Failed to load items', 'destructive')
@@ -106,10 +165,14 @@ function ItemsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: itemName.trim(),
         categoryId: itemCategoryId,
         estimatedPrice: Math.round(parseFloat(itemPrice) * 100),
+      }
+      if (addMode === 'catalog' && selectedGlobalItemId) {
+        payload.globalItemId = selectedGlobalItemId
+        if (userData?.cityId) payload.cityId = userData.cityId
       }
       if (editingItem) {
         return apiPut(`/api/items/${editingItem.id}`, payload)
@@ -120,10 +183,14 @@ function ItemsPage() {
       queryClient.invalidateQueries({ queryKey: ['items'] })
       setDialogOpen(false)
       setEditingItem(null)
+      setAddMode('catalog')
       setItemName('')
       setItemCategoryId('')
       setItemPrice('')
       setError('')
+      setCatalogSearch('')
+      setSelectedGlobalCategoryId('')
+      setSelectedGlobalItemId('')
     },
     onError: (err: any) => setError(err.message || 'Failed to save item'),
   })
@@ -155,12 +222,36 @@ function ItemsPage() {
 
   const openCreateDialog = () => {
     setEditingItem(null)
+    setAddMode('catalog')
     setItemName('')
     setItemCategoryId('')
     setItemPrice('')
     setError('')
+    setCatalogSearch('')
+    setSelectedGlobalCategoryId('')
+    setSelectedGlobalItemId('')
     setDialogOpen(true)
   }
+
+  const handleSelectGlobalItem = (globalItem: GlobalItem) => {
+    setSelectedGlobalItemId(globalItem.id)
+    setItemName(globalItem.name)
+    // Find matching local category by name, or pick the first one
+    const match = categories.find((c) => c.name === globalItem.categoryName)
+    if (match) {
+      setItemCategoryId(match.id)
+    } else if (categories.length > 0) {
+      setItemCategoryId(categories[0].id)
+    }
+    // Price will be filled by the price query effect
+  }
+
+  // Auto-fill price when catalog price data arrives
+  useEffect(() => {
+    if (addMode === 'catalog' && priceData?.price?.price && !editingItem) {
+      setItemPrice((priceData.price.price / 100).toFixed(2))
+    }
+  }, [addMode, priceData, editingItem])
 
   if (isPending || itemsLoading) return <LoadingSpinner />
 
@@ -206,12 +297,145 @@ function ItemsPage() {
                       : 'Add a new item to your catalog.'}
                   </DialogDescription>
                 </DialogHeader>
+
+                {/* Mode toggle — hidden when editing */}
+                {!editingItem && (
+                  <div className="flex rounded-md border border-border overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setAddMode('catalog')}
+                      className={cn(
+                        'flex-1 py-2 px-3 text-sm font-medium transition-colors',
+                        addMode === 'catalog'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <Globe className="inline size-3.5 mr-1.5 -mt-0.5" />
+                      Browse Catalog
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddMode('custom')}
+                      className={cn(
+                        'flex-1 py-2 px-3 text-sm font-medium transition-colors',
+                        addMode === 'custom'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <Plus className="inline size-3.5 mr-1.5 -mt-0.5" />
+                      Create Custom
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-4 py-4">
                   {error && (
                     <div className="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive">
                       {error}
                     </div>
                   )}
+
+                  {/* Catalog browsing mode */}
+                  {!editingItem && addMode === 'catalog' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select
+                          value={selectedGlobalCategoryId}
+                          onValueChange={(v) => {
+                            setSelectedGlobalCategoryId(v ?? '')
+                            setSelectedGlobalItemId('')
+                          }}
+                          items={[
+                            { value: '', label: 'All categories' },
+                            ...globalCategories.map((c) => ({ value: c.id, label: c.name })),
+                          ]}
+                        >
+                          <SelectTrigger className="w-full bg-background">
+                            <SelectValue placeholder="All categories" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">All categories</SelectItem>
+                            {globalCategories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input
+                          value={catalogSearch}
+                          onChange={(e) => setCatalogSearch(e.target.value)}
+                          placeholder="Search catalog items…"
+                          className="pl-9 bg-background"
+                        />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                        {globalItems.length === 0 ? (
+                          <p className="p-3 text-sm text-muted-foreground text-center">
+                            No catalog items found.
+                          </p>
+                        ) : (
+                          globalItems.map((g) => (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => handleSelectGlobalItem(g)}
+                              className={cn(
+                                'w-full text-left px-3 py-2 text-sm transition-colors hover:bg-accent/10',
+                                selectedGlobalItemId === g.id && 'bg-accent/10',
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="font-medium text-foreground">{g.name}</span>
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    {g.categoryName} · {g.unit}
+                                  </span>
+                                </div>
+                                {selectedGlobalItemId === g.id && (
+                                  <Check className="size-4 text-primary" />
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      {selectedGlobalItem && (
+                        <div className="rounded-md border border-border bg-surface p-3 space-y-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {selectedGlobalItem.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedGlobalItem.categoryName} · {selectedGlobalItem.unit}
+                          </p>
+                          {userData?.cityId && priceData?.price?.price ? (
+                            <p className="text-sm text-foreground">
+                              Suggested price:{' '}
+                              <span className="tabular font-semibold">
+                                {formatPrice(priceData.price.price)}
+                              </span>
+                            </p>
+                          ) : userData?.cityId ? (
+                            <p className="text-xs text-muted-foreground">
+                              No price data for your city.
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Set your city in settings for price suggestions.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Item name — always visible */}
                   <div className="space-y-2">
                     <Label htmlFor="item-name">Name</Label>
                     <Input
@@ -337,6 +561,12 @@ function ItemsPage() {
                               </h3>
                               <p className="text-xs text-muted-foreground">
                                 {catName}
+                                {item.globalItemId && (
+                                  <span className="ml-2 inline-flex items-center gap-0.5 text-primary">
+                                    <Globe className="size-3" />
+                                    Catalog
+                                  </span>
+                                )}
                               </p>
                             </div>
                           </div>
