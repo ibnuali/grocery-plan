@@ -10,6 +10,10 @@ export const user = pgTable('user', {
   username: text().notNull().unique(),
   displayUsername: text('display_username'),
   image: text(),
+  provinceId: text('province_id')
+    .references(() => province.id),
+  cityId: text('city_id')
+    .references(() => city.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })
@@ -62,10 +66,13 @@ export const category = pgTable('category', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id),
+  globalCategoryId: text('global_category_id')
+    .references(() => globalCategory.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 }, (t) => [
   index('category_user_id_idx').on(t.userId),
+  index('category_global_category_id_idx').on(t.globalCategoryId),
 ])
 
 export const item = pgTable('item', {
@@ -78,12 +85,70 @@ export const item = pgTable('item', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id),
+  globalItemId: text('global_item_id')
+    .references(() => globalItem.id),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 }, (t) => [
   index('item_user_id_idx').on(t.userId),
   index('item_category_id_idx').on(t.categoryId),
+  index('item_global_item_id_idx').on(t.globalItemId),
   check('estimated_price_non_negative', sql`${t.estimatedPrice} >= 0`),
+])
+
+// Global Catalog Tables
+
+export const province = pgTable('province', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+})
+
+export const city = pgTable('city', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  provinceId: text('province_id')
+    .notNull()
+    .references(() => province.id),
+}, (t) => [
+  index('city_province_id_idx').on(t.provinceId),
+])
+
+export const globalCategory = pgTable('global_category', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+})
+
+export const globalItem = pgTable('global_item', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  unit: text().notNull(), // e.g. 'kg', 'pcs', 'pack', 'litre'
+  globalCategoryId: text('global_category_id')
+    .notNull()
+    .references(() => globalCategory.id),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+}, (t) => [
+  index('global_item_category_id_idx').on(t.globalCategoryId),
+])
+
+export const globalPrice = pgTable('global_price', {
+  id: text().primaryKey(),
+  globalItemId: text('global_item_id')
+    .notNull()
+    .references(() => globalItem.id, { onDelete: 'cascade' }),
+  cityId: text('city_id')
+    .notNull()
+    .references(() => city.id),
+  price: integer().notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+}, (t) => [
+  index('global_price_item_id_idx').on(t.globalItemId),
+  index('global_price_city_id_idx').on(t.cityId),
+  index('global_price_item_city_idx').on(t.globalItemId, t.cityId),
+  check('global_price_non_negative', sql`${t.price} >= 0`),
 ])
 
 export const shoppingList = pgTable('shopping_list', {
