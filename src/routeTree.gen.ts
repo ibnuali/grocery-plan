@@ -14,6 +14,7 @@ import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as ListsRouteImport } from './routes/lists'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ListsListIdRouteImport } from './routes/lists/$listId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -26,7 +27,10 @@ import { Route as ApiItemsIndexRouteImport } from './routes/api/items/index'
 import { Route as ApiItemsSplatRouteImport } from './routes/api/items/$'
 import { Route as ApiListsIndexRouteImport } from './routes/api/lists/index'
 import { Route as ApiListsSplatRouteImport } from './routes/api/lists/$'
+import { Route as ApiLocationsCitiesRouteImport } from './routes/api/locations/cities'
+import { Route as ApiLocationsProvincesRouteImport } from './routes/api/locations/provinces'
 import { Route as ApiPurchasesIndexRouteImport } from './routes/api/purchases/index'
+import { Route as ApiUserLocationRouteImport } from './routes/api/user/location'
 import { Route as ApiListsItemsIndexRouteImport } from './routes/api/lists/items/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -52,6 +56,11 @@ const ListsRoute = ListsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -114,9 +123,24 @@ const ApiListsSplatRoute = ApiListsSplatRouteImport.update({
   path: '/api/lists/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLocationsCitiesRoute = ApiLocationsCitiesRouteImport.update({
+  id: '/api/locations/cities',
+  path: '/api/locations/cities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLocationsProvincesRoute = ApiLocationsProvincesRouteImport.update({
+  id: '/api/locations/provinces',
+  path: '/api/locations/provinces',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPurchasesIndexRoute = ApiPurchasesIndexRouteImport.update({
   id: '/api/purchases/',
   path: '/api/purchases/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUserLocationRoute = ApiUserLocationRouteImport.update({
+  id: '/api/user/location',
+  path: '/api/user/location',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiListsItemsIndexRoute = ApiListsItemsIndexRouteImport.update({
@@ -131,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/items': typeof ItemsRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -140,6 +165,9 @@ export interface FileRoutesByFullPath {
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
+  '/api/locations/cities': typeof ApiLocationsCitiesRoute
+  '/api/locations/provinces': typeof ApiLocationsProvincesRoute
+  '/api/user/location': typeof ApiUserLocationRoute
   '/api/categories/': typeof ApiCategoriesIndexRoute
   '/api/items/': typeof ApiItemsIndexRoute
   '/api/lists/': typeof ApiListsIndexRoute
@@ -152,6 +180,7 @@ export interface FileRoutesByTo {
   '/items': typeof ItemsRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -161,6 +190,9 @@ export interface FileRoutesByTo {
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
+  '/api/locations/cities': typeof ApiLocationsCitiesRoute
+  '/api/locations/provinces': typeof ApiLocationsProvincesRoute
+  '/api/user/location': typeof ApiUserLocationRoute
   '/api/categories': typeof ApiCategoriesIndexRoute
   '/api/items': typeof ApiItemsIndexRoute
   '/api/lists': typeof ApiListsIndexRoute
@@ -174,6 +206,7 @@ export interface FileRoutesById {
   '/items': typeof ItemsRoute
   '/lists': typeof ListsRouteWithChildren
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/lists/$listId': typeof ListsListIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -183,6 +216,9 @@ export interface FileRoutesById {
   '/api/categories/$': typeof ApiCategoriesSplatRoute
   '/api/items/$': typeof ApiItemsSplatRoute
   '/api/lists/$': typeof ApiListsSplatRoute
+  '/api/locations/cities': typeof ApiLocationsCitiesRoute
+  '/api/locations/provinces': typeof ApiLocationsProvincesRoute
+  '/api/user/location': typeof ApiUserLocationRoute
   '/api/categories/': typeof ApiCategoriesIndexRoute
   '/api/items/': typeof ApiItemsIndexRoute
   '/api/lists/': typeof ApiListsIndexRoute
@@ -197,6 +233,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/lists'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
@@ -206,6 +243,9 @@ export interface FileRouteTypes {
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
+    | '/api/locations/cities'
+    | '/api/locations/provinces'
+    | '/api/user/location'
     | '/api/categories/'
     | '/api/items/'
     | '/api/lists/'
@@ -218,6 +258,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/lists'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
@@ -227,6 +268,9 @@ export interface FileRouteTypes {
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
+    | '/api/locations/cities'
+    | '/api/locations/provinces'
+    | '/api/user/location'
     | '/api/categories'
     | '/api/items'
     | '/api/lists'
@@ -239,6 +283,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/lists'
     | '/login'
+    | '/settings'
     | '/signup'
     | '/lists/$listId'
     | '/api/auth/$'
@@ -248,6 +293,9 @@ export interface FileRouteTypes {
     | '/api/categories/$'
     | '/api/items/$'
     | '/api/lists/$'
+    | '/api/locations/cities'
+    | '/api/locations/provinces'
+    | '/api/user/location'
     | '/api/categories/'
     | '/api/items/'
     | '/api/lists/'
@@ -261,6 +309,7 @@ export interface RootRouteChildren {
   ItemsRoute: typeof ItemsRoute
   ListsRoute: typeof ListsRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCatalogCategoriesRoute: typeof ApiCatalogCategoriesRoute
@@ -269,6 +318,9 @@ export interface RootRouteChildren {
   ApiCategoriesSplatRoute: typeof ApiCategoriesSplatRoute
   ApiItemsSplatRoute: typeof ApiItemsSplatRoute
   ApiListsSplatRoute: typeof ApiListsSplatRoute
+  ApiLocationsCitiesRoute: typeof ApiLocationsCitiesRoute
+  ApiLocationsProvincesRoute: typeof ApiLocationsProvincesRoute
+  ApiUserLocationRoute: typeof ApiUserLocationRoute
   ApiCategoriesIndexRoute: typeof ApiCategoriesIndexRoute
   ApiItemsIndexRoute: typeof ApiItemsIndexRoute
   ApiListsIndexRoute: typeof ApiListsIndexRoute
@@ -311,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -397,11 +456,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiListsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/locations/cities': {
+      id: '/api/locations/cities'
+      path: '/api/locations/cities'
+      fullPath: '/api/locations/cities'
+      preLoaderRoute: typeof ApiLocationsCitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/locations/provinces': {
+      id: '/api/locations/provinces'
+      path: '/api/locations/provinces'
+      fullPath: '/api/locations/provinces'
+      preLoaderRoute: typeof ApiLocationsProvincesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/purchases/': {
       id: '/api/purchases/'
       path: '/api/purchases'
       fullPath: '/api/purchases/'
       preLoaderRoute: typeof ApiPurchasesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/user/location': {
+      id: '/api/user/location'
+      path: '/api/user/location'
+      fullPath: '/api/user/location'
+      preLoaderRoute: typeof ApiUserLocationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/lists/items/': {
@@ -430,6 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   ItemsRoute: ItemsRoute,
   ListsRoute: ListsRouteWithChildren,
   LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCatalogCategoriesRoute: ApiCatalogCategoriesRoute,
@@ -438,6 +519,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCategoriesSplatRoute: ApiCategoriesSplatRoute,
   ApiItemsSplatRoute: ApiItemsSplatRoute,
   ApiListsSplatRoute: ApiListsSplatRoute,
+  ApiLocationsCitiesRoute: ApiLocationsCitiesRoute,
+  ApiLocationsProvincesRoute: ApiLocationsProvincesRoute,
+  ApiUserLocationRoute: ApiUserLocationRoute,
   ApiCategoriesIndexRoute: ApiCategoriesIndexRoute,
   ApiItemsIndexRoute: ApiItemsIndexRoute,
   ApiListsIndexRoute: ApiListsIndexRoute,

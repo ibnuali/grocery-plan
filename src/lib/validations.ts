@@ -68,3 +68,8 @@ export const createPurchaseSchema = z.object({
   shoppingListItemId: z.string().min(1, 'shoppingListItemId is required'),
   actualPrice: z.number().int().nonnegative('Price must be non-negative'),
 })
+
+export const updateUserLocationSchema = z.object({
+  provinceId: z.string().nullable().optional(),
+  cityId: z.string().nullable().optional(),
+})

@@ -19,6 +19,7 @@ export function AppHeader({ session, activeRoute }: AppHeaderProps) {
     { to: '/categories', label: 'Categories' },
     { to: '/items', label: 'Items' },
     { to: '/lists', label: 'Lists' },
+    { to: '/settings', label: 'Settings' },
   ] as const
 
   const menuLinks = navLinks.filter((link) => link.to !== '/')
