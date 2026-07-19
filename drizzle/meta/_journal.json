@@ -15,6 +15,13 @@
       "when": 1784215200000,
       "tag": "0001_global_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784500000000,
+      "tag": "0002_seed_global_catalog",
+      "breakpoints": true
     }
   ]
 }

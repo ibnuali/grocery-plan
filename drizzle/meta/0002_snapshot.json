@@ -1,0 +1,503 @@
+{
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "prevId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "account_id": { "name": "account_id", "type": "text", "primaryKey": false, "notNull": true },
+        "provider_id": { "name": "provider_id", "type": "text", "primaryKey": false, "notNull": true },
+        "user_id": { "name": "user_id", "type": "text", "primaryKey": false, "notNull": true },
+        "access_token": { "name": "access_token", "type": "text", "primaryKey": false, "notNull": false },
+        "refresh_token": { "name": "refresh_token", "type": "text", "primaryKey": false, "notNull": false },
+        "id_token": { "name": "id_token", "type": "text", "primaryKey": false, "notNull": false },
+        "access_token_expires_at": { "name": "access_token_expires_at", "type": "timestamp", "primaryKey": false, "notNull": false },
+        "refresh_token_expires_at": { "name": "refresh_token_expires_at", "type": "timestamp", "primaryKey": false, "notNull": false },
+        "scope": { "name": "scope", "type": "text", "primaryKey": false, "notNull": false },
+        "password": { "name": "password", "type": "text", "primaryKey": false, "notNull": false },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "expires_at": { "name": "expires_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "token": { "name": "token", "type": "text", "primaryKey": false, "notNull": true },
+        "ip_address": { "name": "ip_address", "type": "text", "primaryKey": false, "notNull": false },
+        "user_agent": { "name": "user_agent", "type": "text", "primaryKey": false, "notNull": false },
+        "user_id": { "name": "user_id", "type": "text", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": { "name": "session_token_unique", "nullsNotDistinct": false, "columns": ["token"] }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.todos": {
+      "name": "todos",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "serial", "primaryKey": true, "notNull": true },
+        "title": { "name": "title", "type": "text", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": false, "default": "now()" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "email": { "name": "email", "type": "text", "primaryKey": false, "notNull": true },
+        "email_verified": { "name": "email_verified", "type": "boolean", "primaryKey": false, "notNull": true },
+        "username": { "name": "username", "type": "text", "primaryKey": false, "notNull": true },
+        "display_username": { "name": "display_username", "type": "text", "primaryKey": false, "notNull": false },
+        "image": { "name": "image", "type": "text", "primaryKey": false, "notNull": false },
+        "province_id": { "name": "province_id", "type": "text", "primaryKey": false, "notNull": false },
+        "city_id": { "name": "city_id", "type": "text", "primaryKey": false, "notNull": false },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_province_id_province_id_fk": {
+          "name": "user_province_id_province_id_fk",
+          "tableFrom": "user",
+          "tableTo": "province",
+          "columnsFrom": ["province_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_city_id_city_id_fk": {
+          "name": "user_city_id_city_id_fk",
+          "tableFrom": "user",
+          "tableTo": "city",
+          "columnsFrom": ["city_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": { "name": "user_email_unique", "nullsNotDistinct": false, "columns": ["email"] },
+        "user_username_unique": { "name": "user_username_unique", "nullsNotDistinct": false, "columns": ["username"] }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "identifier": { "name": "identifier", "type": "text", "primaryKey": false, "notNull": true },
+        "value": { "name": "value", "type": "text", "primaryKey": false, "notNull": true },
+        "expires_at": { "name": "expires_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": false },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": false }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.category": {
+      "name": "category",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "user_id": { "name": "user_id", "type": "text", "primaryKey": false, "notNull": true },
+        "global_category_id": { "name": "global_category_id", "type": "text", "primaryKey": false, "notNull": false },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "category_user_id_idx": { "name": "category_user_id_idx", "columns": { "0": { "name": "user_id", "isExpression": false } }, "isUnique": false },
+        "category_global_category_id_idx": { "name": "category_global_category_id_idx", "columns": { "0": { "name": "global_category_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "category_user_id_user_id_fk": {
+          "name": "category_user_id_user_id_fk",
+          "tableFrom": "category",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "category_global_category_id_global_category_id_fk": {
+          "name": "category_global_category_id_global_category_id_fk",
+          "tableFrom": "category",
+          "tableTo": "global_category",
+          "columnsFrom": ["global_category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.item": {
+      "name": "item",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "category_id": { "name": "category_id", "type": "text", "primaryKey": false, "notNull": true },
+        "estimated_price": { "name": "estimated_price", "type": "integer", "primaryKey": false, "notNull": true },
+        "user_id": { "name": "user_id", "type": "text", "primaryKey": false, "notNull": true },
+        "global_item_id": { "name": "global_item_id", "type": "text", "primaryKey": false, "notNull": false },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "item_user_id_idx": { "name": "item_user_id_idx", "columns": { "0": { "name": "user_id", "isExpression": false } }, "isUnique": false },
+        "item_category_id_idx": { "name": "item_category_id_idx", "columns": { "0": { "name": "category_id", "isExpression": false } }, "isUnique": false },
+        "item_global_item_id_idx": { "name": "item_global_item_id_idx", "columns": { "0": { "name": "global_item_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "item_category_id_category_id_fk": {
+          "name": "item_category_id_category_id_fk",
+          "tableFrom": "item",
+          "tableTo": "category",
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "item_user_id_user_id_fk": {
+          "name": "item_user_id_user_id_fk",
+          "tableFrom": "item",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "item_global_item_id_global_item_id_fk": {
+          "name": "item_global_item_id_global_item_id_fk",
+          "tableFrom": "item",
+          "tableTo": "global_item",
+          "columnsFrom": ["global_item_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "estimated_price_non_negative": { "name": "estimated_price_non_negative", "value": "\"estimated_price\" >= 0" }
+      },
+      "isRLSEnabled": false
+    },
+    "public.shopping_list": {
+      "name": "shopping_list",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "period": { "name": "period", "type": "text", "primaryKey": false, "notNull": true },
+        "start_date": { "name": "start_date", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "end_date": { "name": "end_date", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "user_id": { "name": "user_id", "type": "text", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "shopping_list_user_id_idx": { "name": "shopping_list_user_id_idx", "columns": { "0": { "name": "user_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "shopping_list_user_id_user_id_fk": {
+          "name": "shopping_list_user_id_user_id_fk",
+          "tableFrom": "shopping_list",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.shopping_list_item": {
+      "name": "shopping_list_item",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "shopping_list_id": { "name": "shopping_list_id", "type": "text", "primaryKey": false, "notNull": true },
+        "item_id": { "name": "item_id", "type": "text", "primaryKey": false, "notNull": true },
+        "quantity": { "name": "quantity", "type": "integer", "primaryKey": false, "notNull": true, "default": 1 },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "shopping_list_item_list_id_idx": { "name": "shopping_list_item_list_id_idx", "columns": { "0": { "name": "shopping_list_id", "isExpression": false } }, "isUnique": false },
+        "shopping_list_item_item_id_idx": { "name": "shopping_list_item_item_id_idx", "columns": { "0": { "name": "item_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "shopping_list_item_shopping_list_id_shopping_list_id_fk": {
+          "name": "shopping_list_item_shopping_list_id_shopping_list_id_fk",
+          "tableFrom": "shopping_list_item",
+          "tableTo": "shopping_list",
+          "columnsFrom": ["shopping_list_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "shopping_list_item_item_id_item_id_fk": {
+          "name": "shopping_list_item_item_id_item_id_fk",
+          "tableFrom": "shopping_list_item",
+          "tableTo": "item",
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.purchase": {
+      "name": "purchase",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "shopping_list_item_id": { "name": "shopping_list_item_id", "type": "text", "primaryKey": false, "notNull": true },
+        "actual_price": { "name": "actual_price", "type": "integer", "primaryKey": false, "notNull": true },
+        "purchased_at": { "name": "purchased_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "purchase_shopping_list_item_id_idx": { "name": "purchase_shopping_list_item_id_idx", "columns": { "0": { "name": "shopping_list_item_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "purchase_shopping_list_item_id_shopping_list_item_id_fk": {
+          "name": "purchase_shopping_list_item_id_shopping_list_item_id_fk",
+          "tableFrom": "purchase",
+          "tableTo": "shopping_list_item",
+          "columnsFrom": ["shopping_list_item_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.province": {
+      "name": "province",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.city": {
+      "name": "city",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "province_id": { "name": "province_id", "type": "text", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "city_province_id_idx": { "name": "city_province_id_idx", "columns": { "0": { "name": "province_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "city_province_id_province_id_fk": {
+          "name": "city_province_id_province_id_fk",
+          "tableFrom": "city",
+          "tableTo": "province",
+          "columnsFrom": ["province_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.global_category": {
+      "name": "global_category",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.global_item": {
+      "name": "global_item",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "text", "primaryKey": false, "notNull": true },
+        "unit": { "name": "unit", "type": "text", "primaryKey": false, "notNull": true },
+        "global_category_id": { "name": "global_category_id", "type": "text", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "global_item_category_id_idx": { "name": "global_item_category_id_idx", "columns": { "0": { "name": "global_category_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "global_item_global_category_id_global_category_id_fk": {
+          "name": "global_item_global_category_id_global_category_id_fk",
+          "tableFrom": "global_item",
+          "tableTo": "global_category",
+          "columnsFrom": ["global_category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.global_price": {
+      "name": "global_price",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true },
+        "global_item_id": { "name": "global_item_id", "type": "text", "primaryKey": false, "notNull": true },
+        "city_id": { "name": "city_id", "type": "text", "primaryKey": false, "notNull": true },
+        "price": { "name": "price", "type": "integer", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp", "primaryKey": false, "notNull": true },
+        "updated_at": { "name": "updated_at", "type": "timestamp", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {
+        "global_price_item_id_idx": { "name": "global_price_item_id_idx", "columns": { "0": { "name": "global_item_id", "isExpression": false } }, "isUnique": false },
+        "global_price_city_id_idx": { "name": "global_price_city_id_idx", "columns": { "0": { "name": "city_id", "isExpression": false } }, "isUnique": false },
+        "global_price_item_city_idx": { "name": "global_price_item_city_idx", "columns": { "0": { "name": "global_item_id", "isExpression": false }, "1": { "name": "city_id", "isExpression": false } }, "isUnique": false }
+      },
+      "foreignKeys": {
+        "global_price_global_item_id_global_item_id_fk": {
+          "name": "global_price_global_item_id_global_item_id_fk",
+          "tableFrom": "global_price",
+          "tableTo": "global_item",
+          "columnsFrom": ["global_item_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "global_price_city_id_city_id_fk": {
+          "name": "global_price_city_id_city_id_fk",
+          "tableFrom": "global_price",
+          "tableTo": "city",
+          "columnsFrom": ["city_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "global_price_non_negative": { "name": "global_price_non_negative", "value": "\"price\" >= 0" }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
